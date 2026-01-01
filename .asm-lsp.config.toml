@@ -1,3 +1,0 @@
-[global]
-dialect = "nasm"
-intel_syntax = true
