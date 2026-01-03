@@ -24,15 +24,17 @@ start:
     mov si, done_mmap_msg
     call print_message
 
+    stage2_addr equ 0x7E00
+
     ; Read second sector into memory at 0x7E00
-    mov ah, 0x02        ; BIOS read sectors function
-    mov al, 0x01        ; number of sectors to read
-    mov ch, 0x00        ; cylinder 0
-    mov cl, 0x02        ; sector 2
-    mov dh, 0x00        ; head 0
-    mov dl, 0x80        ; drive 0x80 (first hard disk)
-    mov bx, 0x7E00      ; buffer to read into
-    int 0x13            ; call BIOS disk interrupt
+    mov ah, 0x02            ; BIOS read sectors function
+    mov al, 0x01            ; number of sectors to read
+    mov ch, 0x00            ; cylinder 0
+    mov cl, 0x02            ; sector 2
+    mov dh, 0x00            ; head 0
+    mov dl, 0x80            ; drive 0x80 (first hard disk)
+    mov bx, stage2_addr     ; buffer to read into
+    int 0x13                ; call BIOS disk interrupt
 
     jc read_error      ; jump if carry flag is set (error)
 
@@ -41,7 +43,12 @@ start:
 
     call setup_pm    ; Setup protected mode
 
-    jmp halt
+    mov eax, cr0        ; Get control register 0
+    or eax, 1           ; Set the PE (Protection Enable) bit
+    mov cr0, eax        ; Update control register 0
+
+    jmp code_sel:stage2_addr    ; Far jump to protected mode code segment
+
 
 halt:
     cli
@@ -59,7 +66,7 @@ read_error:
 
 BOOT_DRIVE db 0
 
-done_mmap_msg db "Memory Map", 0
+done_mmap_msg db "Memory Map Loaded", 0
 read_success_msg db "Second Stage Loaded", 0
 read_err_msg db "Error reading from disk.", 0
 
