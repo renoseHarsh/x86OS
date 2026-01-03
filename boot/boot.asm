@@ -19,20 +19,12 @@ start:
     mov al, 0x03
     int 0x10            ; set video mode 0x13
 
-    ; Print messages
-    mov si, start_boot_msg
-    call print_message
-    mov si, load_mmap_msg
-    call print_message
-
     call load_mmap      ; Load memory map
+
     mov si, done_mmap_msg
     call print_message
 
     ; Read second sector into memory at 0x7E00
-    mov si, read_msg
-    call print_message
-
     mov ah, 0x02        ; BIOS read sectors function
     mov al, 0x01        ; number of sectors to read
     mov ch, 0x00        ; cylinder 0
@@ -47,6 +39,7 @@ start:
     mov si, read_success_msg
     call print_message
 
+    call setup_pm    ; Setup protected mode
 
     jmp halt
 
@@ -62,14 +55,12 @@ read_error:
 
 %include "boot/print.asm"
 %include "boot/e820.asm"
+%include "boot/pm_setup.asm"
 
 BOOT_DRIVE db 0
 
-start_boot_msg db "Booting...", 0
-load_mmap_msg db "Loading memory map...", 0
-done_mmap_msg db "Memory map loaded successfully.", 0
-read_msg db "Reading second stage from disk...", 0
-read_success_msg db "Second stage loaded successfully.", 0
+done_mmap_msg db "Memory Map", 0
+read_success_msg db "Second Stage Loaded", 0
 read_err_msg db "Error reading from disk.", 0
 
 times 510-($-$$) db 0

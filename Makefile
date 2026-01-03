@@ -1,6 +1,10 @@
 asm = nasm
 
+# 1. Define source files
+BOOT_SOURCE = $(wildcard boot/*.asm)
+
 all: build/boot.bin
 
-build/boot.bin: boot/boot.asm boot/print.asm boot/e820.asm
-	$(asm) -f bin $< -o $@
+# 2. Build bootloader
+build/boot.bin: $(BOOT_SOURCE)
+	$(asm) -f bin boot/boot.asm -o $@
