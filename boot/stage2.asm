@@ -146,8 +146,8 @@ ATA_PIO_READ:
     mov dx, IO_BASE + 7
     in al, dx
 
-    xor bx, bx
 
+    jmp kernel_buffer
 
         
     
@@ -160,5 +160,3 @@ HALT:
 protected_mode db "In Protected Mode", 0
 
 times (2*512)-($-$$) db 0
-test_msg db "Stage 2 Loaded Successfully", 0
-times (3*512)-($-$$) db 0
