@@ -1,7 +1,18 @@
 BasedOnStyle: GNU
 
+IndentWidth: 4
+TabWidth: 4
+
 BreakAfterReturnType: Automatic
 PenaltyReturnTypeOnItsOwnLine: 200
 
 AllowShortFunctionsOnASingleLine: None
 
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterControlStatement: false
+
+AlignAfterOpenBracket: BlockIndent 
+
+SpaceBeforeParens: ControlStatements 
