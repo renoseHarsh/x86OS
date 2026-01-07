@@ -6,7 +6,7 @@ OBJCOPY := i686-elf-objcopy
 QEMU    := qemu-system-i386
 
 # --- Project Structure ---
-SRC_DIRS := kernel drivers hal lib
+SRC_DIRS := $(shell find kernel drivers hal lib -type d)
 
 # --- Flags ---
 INCLUDES := $(addprefix -I, $(SRC_DIRS))
@@ -18,9 +18,11 @@ VPATH := $(SRC_DIRS)
 
 ### All files needed for bootloader and kernel ###
 BOOT_SOURCE     := $(wildcard boot/*.asm) 
-KERNEL_SOURCE   := $(shell find . -type f -name '*.c')
-KERNEL_HEADERS  := $(shell find . -type f -name '*.h') 
+KERNEL_SOURCE   := $(shell find $(SRC_DIRS) -type f -name '*.c')
+KERNEL_HEADERS  := $(shell find $(SRC_DIRS) -type f -name '*.h') 
+KERNEL_ASM      := $(shell find $(SRC_DIRS) -type f -name '*.asm')
 KERNEL_OBJ      := $(addprefix build/, $(notdir $(KERNEL_SOURCE:.c=.o)))
+KERNEL_OBJ      += $(addprefix build/, $(notdir $(KERNEL_ASM:.asm=.o)))
 FINAL           := build/bootbable.bin
 
 ### Makefile Rules ###
@@ -39,6 +41,9 @@ build/kernel.bin: build/kernel.elf
 
 build/kernel.elf: build/kernel.o $(filter-out build/kernel.o, $(KERNEL_OBJ))
 	$(CC) $(LDFLAGS) $^ -o $@
+
+build/%.o: %.asm
+	$(ASM) -f elf32 $< -o $@
 
 build/%.o: %.c
 	$(CC) $(CFLAGS) $< -o $@

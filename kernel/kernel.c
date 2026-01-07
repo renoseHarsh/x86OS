@@ -1,3 +1,4 @@
+#include "idt.h"
 #include "kprintf.h"
 #include "vga.h"
 #include <stdbool.h>
@@ -5,7 +6,8 @@
 int kmain()
 {
     vga_clear();
-    kprintf("Hello, Kernel World!\n");
+    init_idt();
+    kprintf("IDT initialized.\n");
 
     for (;;) {
     }
