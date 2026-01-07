@@ -1,7 +1,13 @@
+#include "kprintf.h"
+#include "vga.h"
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
-int kmain ()
+int kmain()
 {
-  for (;;)
-    {
+    vga_clear();
+    kprintf("Hello, Kernel World!\n");
+
+    for (;;) {
     }
 }
