@@ -10,3 +10,5 @@ typedef struct {
 } __attribute__((packed)) register_t;
 
 void interrupt_handler(register_t *regs);
+typedef void (*isr_t)(register_t *); // Fucntion pointer to ISR handler
+void register_interrupt_handler(uint8_t n, isr_t handler);
