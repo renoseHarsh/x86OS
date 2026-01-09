@@ -39,7 +39,7 @@ build/boot.bin: $(BOOT_SOURCE)
 build/kernel.bin: build/kernel.elf
 	$(OBJCOPY) -O binary $< $@
 
-build/kernel.elf: build/kernel.o $(filter-out build/kernel.o, $(KERNEL_OBJ))
+build/kernel.elf: build/kernel_entry.o $(filter-out build/kernel_entry.o, $(KERNEL_OBJ))
 	$(CC) $(LDFLAGS) $^ -o $@
 
 build/%.o: %.asm

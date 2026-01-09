@@ -1,4 +1,4 @@
-ENTRY(kmain)
+ENTRY(kernel_entry)
 
 SECTIONS
 {
