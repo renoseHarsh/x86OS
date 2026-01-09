@@ -1,6 +1,9 @@
 #include "debug.h"
 #include "isr.h"
 #include "kprintf.h"
+#include "pic.h"
+
+#define IRQ_BASE 0x20 // Interrupt 32
 
 static isr_t interrupt_handlers[256] = { 0 };
 
@@ -39,24 +42,39 @@ static const char *const g_Exceptions[] = { "Divide by zero error",
 
 void __attribute__((cdecl)) interrupt_handler(register_t *regs)
 {
-    if (interrupt_handlers[regs->interrupt]) {
-        interrupt_handlers[regs->interrupt](regs);
-    } else {
-        kprintf("\n\n");
-        kprintf(
-            "Unhandled exception %d %s\n", regs->interrupt,
-            g_Exceptions[regs->interrupt]
-        );
-        kprintf(
-            "eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x\n", regs->ax, regs->bx,
-            regs->cx, regs->dx, regs->si, regs->di
-        );
-        kprintf("eip=%x cs=%x eflags=%x\n", regs->eip, regs->cs, regs->eflags);
-        kprintf(
-            "interrupt=%d error_code=%x\n", regs->interrupt, regs->error_code
-        );
-        kernel_panic();
+    uint8_t vec = regs->interrupt;
+
+    if (vec >= IRQ_BASE && vec < IRQ_BASE + 16) {
+        uint8_t irq = vec - IRQ_BASE;
+
+        if (interrupt_handlers[vec])
+            interrupt_handlers[vec](regs);
+        else
+            kprintf("Unhandled IRQ %d\n", irq);
+
+        pic_send_eoi(irq);
+        return;
     }
+
+    if (interrupt_handlers[vec]) {
+        interrupt_handlers[vec](regs);
+        return;
+    }
+
+    kprintf("\n\n");
+
+    if (vec < 32)
+        kprintf("Unhandled exception %d %s\n", vec, g_Exceptions[vec]);
+    else
+        kprintf("Unhandled interrupt: %d\n", vec);
+
+    kprintf(
+        "eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x\n", regs->ax, regs->bx,
+        regs->cx, regs->dx, regs->si, regs->di
+    );
+    kprintf("eip=%x cs=%x eflags=%x\n", regs->eip, regs->cs, regs->eflags);
+    kprintf("interrupt=%d error_code=%x\n", vec, regs->error_code);
+    kernel_panic();
 }
 
 void register_interrupt_handler(uint8_t n, isr_t handler)
