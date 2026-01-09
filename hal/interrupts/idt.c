@@ -20,7 +20,7 @@ static void set_idt_entry(uint8_t vector, void *isr, uint8_t attributes)
 void init_idt()
 {
     kmemset(&idt, 0, sizeof(idt_entry) * 256);
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 256; i++) {
         set_idt_entry(i, isr_stub_table[i], 0x8E);
     }
 
