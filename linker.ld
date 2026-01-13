@@ -1,8 +1,8 @@
-ENTRY(kernel_entry)
+ENTRY(_start)
 
 SECTIONS
 {
-    . = 0x100000;
+    . = 0xC0100000;
 	_kernel_start = .;
 
     /* Code section */
