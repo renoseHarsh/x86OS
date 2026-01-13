@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // VGA text mode buffer starts at physical address 0xB8000
-#define VGA_MEMORY (uint16_t *)0xB8000
+#define VGA_MEMORY (uint16_t *)(0xB8000 + 0xC0000000)
 // VGA text mode dimensions
 #define columns 80
 #define rows 25
