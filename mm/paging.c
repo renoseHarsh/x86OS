@@ -7,34 +7,40 @@ extern char _kernel_end[];
 
 static void enable_paging()
 {
-    __asm__ volatile("mov %0, %%cr3" : : "r"(page_directory));
-    __asm__ volatile("mov %%cr0, %%eax\n\t"
-                     "or $0x80000000, %%eax\n\t"
-                     "mov %%eax, %%cr0" ::
-                         : "eax", "memory");
+    __asm__ volatile("mov %0, %%cr3" : : "r"(V2P(page_directory)));
 }
 
-static void identity_map_boot(uint32_t up_to_address)
+static void map_kernel()
 {
-    for (uint32_t addr = 0; addr < up_to_address; addr += PAGE_SIZE) {
-        uint32_t pd_index = (addr >> 22) & 0x3FF;
-        uint32_t pt_index = (addr >> 12) & 0x3FF;
+    uint32_t real_start = 0;
+    uint32_t virtual_start = KERNEL_VIRTUAL_BASE;
 
-        if (!(page_directory[pd_index] & PAGE_PRESENT)) {
-            pte_t *new_page_table = (pte_t *)pmm_alloc_page();
-            page_directory[pd_index]
-                = ((uint32_t)new_page_table) | PAGE_PRESENT | PAGE_RW;
+    uint32_t virtual_end = (uint32_t)_kernel_end;
+
+    for (uint32_t vaddr = virtual_start, paddr = real_start;
+         vaddr < virtual_end;) {
+
+        uint16_t pde_i = (vaddr >> 22) & 0X3FF;
+        uint16_t pte_i = (vaddr >> 12) & 0x3FF;
+
+        if (!(page_directory[pde_i] & PAGE_PRESENT)) {
+            pde_t page_table = (uint32_t)pmm_alloc_page();
+            page_directory[pde_i] = (page_table | (PAGE_PRESENT | PAGE_RW));
         }
-        pte_t *page_table = (pte_t *)(page_directory[pd_index] & PAGE_MASK);
-        page_table[pt_index] = (addr & PAGE_MASK) | PAGE_PRESENT | PAGE_RW;
+        pte_t *page_table = (pte_t *)P2V((page_directory[pde_i] & PAGE_MASK));
+        page_table[pte_i] = paddr | PAGE_PRESENT | PAGE_RW;
+
+        vaddr += 0x1000;
+        paddr += 0x1000;
     }
 }
 
 void init_paging()
 {
 
-    page_directory = (pde_t *)pmm_alloc_page();
-    page_directory[1023] = ((uint32_t)page_directory) | PAGE_PRESENT | PAGE_RW;
-    identity_map_boot((uint32_t)_kernel_end);
+    uint32_t pd_phys_addr = (uint32_t)pmm_alloc_page();
+    page_directory = (pde_t *)P2V(pd_phys_addr);
+    page_directory[1023] = pd_phys_addr | PAGE_PRESENT | PAGE_RW;
+    map_kernel();
     enable_paging();
 }
