@@ -9,10 +9,6 @@ INIT_PM:
     mov gs, ax
     mov ss, ax
 
-    ; Setup stack
-    mov ebp, 0x80000
-    mov esp, ebp            
-
 
 PRINT:
     mov ebx, 0xB8000 + (4 * (80 * 2))       ; VGA text buffer
