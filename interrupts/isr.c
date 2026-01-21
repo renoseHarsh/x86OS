@@ -1,6 +1,6 @@
-#include "debug.h"
 #include "isr.h"
 #include "kprintf.h"
+#include "panic.h"
 
 #define IRQ_BASE 0x20 // Interrupt 32
 
