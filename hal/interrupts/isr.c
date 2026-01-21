@@ -1,7 +1,6 @@
 #include "debug.h"
 #include "isr.h"
 #include "kprintf.h"
-#include "pic.h"
 
 #define IRQ_BASE 0x20 // Interrupt 32
 
@@ -43,18 +42,6 @@ static const char *const g_Exceptions[] = { "Divide by zero error",
 void __attribute__((cdecl)) interrupt_handler(register_t *regs)
 {
     uint8_t vec = regs->interrupt;
-
-    if (vec >= IRQ_BASE && vec < IRQ_BASE + 16) {
-        uint8_t irq = vec - IRQ_BASE;
-
-        if (interrupt_handlers[vec])
-            interrupt_handlers[vec](regs);
-        else
-            kprintf("Unhandled IRQ %d\n", irq);
-
-        pic_send_eoi(irq);
-        return;
-    }
 
     if (interrupt_handlers[vec]) {
         interrupt_handlers[vec](regs);
