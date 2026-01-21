@@ -12,3 +12,5 @@ uint16_t pic_get_mask();
 
 uint16_t pic_read_isr();
 uint16_t pic_read_irr();
+
+void register_request_handler(uint8_t n, isr_t handler);
