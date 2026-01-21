@@ -40,7 +40,7 @@ build/kernel.bin: build/kernel.elf
 	$(OBJCOPY) -O binary $< $@
 
 build/kernel.elf: build/kernel_entry.o $(filter-out build/kernel_entry.o, $(KERNEL_OBJ))
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $^ $(LDFLAGS) -o $@
 
 build/%.o: %.asm
 	$(ASM) -f elf32 $< -o $@
