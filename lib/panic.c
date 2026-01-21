@@ -1,5 +1,5 @@
-#include "debug.h"
 #include "kprintf.h"
+#include "panic.h"
 
 void kernel_panic()
 {
