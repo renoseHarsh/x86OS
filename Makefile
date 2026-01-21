@@ -6,7 +6,7 @@ OBJCOPY := i686-elf-objcopy
 QEMU    := qemu-system-i386
 
 # --- Project Structure ---
-SRC_DIRS := $(shell find kernel drivers hal lib mm -type d)
+SRC_DIRS := $(shell find kernel drivers lib mm interrupts -type d)
 
 # --- Flags ---
 INCLUDES := $(addprefix -I, $(SRC_DIRS))
