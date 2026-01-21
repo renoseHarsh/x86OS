@@ -1,11 +1,13 @@
 #include "vga.h"
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-static int print_unsigned(unsigned int n, int base)
+static const char *digits = "0123456789ABCDEF";
+
+static int print_unsigned(uint64_t n, int base)
 {
-    const char *digits = "0123456789ABCDEF";
-    char buf[32];
+    char buf[64];
     int i = 0;
 
     if (n == 0) {
@@ -26,14 +28,14 @@ static int print_unsigned(unsigned int n, int base)
     return count;
 }
 
-static int print_signed(int n)
+static int print_signed(int64_t n)
 {
     if (n < 0) {
         int count = 1;
         vga_putc('-');
-        return count + print_unsigned((unsigned int)(-n), 10);
+        return count + print_unsigned((uint64_t)(-n), 10);
     }
-    return print_unsigned((unsigned int)n, 10);
+    return print_unsigned((uint64_t)n, 10);
 }
 
 static int print_str(const char *str)
@@ -55,17 +57,41 @@ int kprintf(const char *fmt, ...)
 
     while (*fmt != '\0') {
         if (*fmt == '%') {
-            switch (*(++fmt)) {
+
+            bool long_flag = 0;
+            bool long_check = 0;
+            if (*(++fmt) == 'l') {
+                long_check = 1;
+                if (*(++fmt) == 'l') {
+                    long_flag = true;
+                    fmt++;
+                }
+            }
+
+            switch (*fmt) {
             case 'd': {
-                count += print_signed(va_arg(args, int));
+                if (long_flag)
+                    count += print_signed(va_arg(args, int64_t));
+                else
+                    count += print_signed((int32_t)va_arg(args, int32_t));
                 break;
             }
             case 'u': {
-                count += print_unsigned(va_arg(args, unsigned int), 10);
+                if (long_flag)
+                    count += print_unsigned(va_arg(args, uint64_t), 10);
+                else
+                    count += print_unsigned(
+                        (uint32_t)va_arg(args, uint32_t), 10
+                    );
                 break;
             }
             case 'x': {
-                count += print_unsigned(va_arg(args, int), 16);
+                if (long_flag)
+                    count += print_unsigned(va_arg(args, uint64_t), 16);
+                else
+                    count += print_unsigned(
+                        (uint32_t)va_arg(args, uint32_t), 16
+                    );
                 break;
             }
             case 'c': {
@@ -84,7 +110,12 @@ int kprintf(const char *fmt, ...)
             }
             default: {
                 vga_putc('%');
+                if (long_check) {
+                    vga_putc('l');
+                    count++;
+                }
                 vga_putc(*fmt);
+
                 count += 2; // for '%' and the character
                 break;
             }
