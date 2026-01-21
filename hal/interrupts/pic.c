@@ -1,3 +1,4 @@
+#include "isr.h"
 #include "pic.h"
 #include "ports.h"
 #include <stdint.h>
@@ -28,6 +29,26 @@
 
 static uint16_t pic_mask = 0xFFFF;
 
+// handlers can have user defined functions to handle each IRQ
+// set by register_handler
+static isr_t request_handlers[16] = { 0 };
+void register_request_handler(uint8_t irq, isr_t handler)
+{
+    request_handlers[irq] = handler;
+}
+
+// Common hardware interrupt handler
+void hardware_interrupt_handler(register_t *regs)
+{
+    uint8_t irq = regs->interrupt - IRQ_BASE;
+
+    if (request_handlers[irq]) {
+        request_handlers[irq](regs);
+    }
+
+    pic_send_eoi(irq);
+}
+
 void init_pic()
 {
     // Send ICW1 to both command registers
@@ -52,6 +73,10 @@ void init_pic()
 
     // Read the mask
     pic_mask = (inb(PIC2_DATA) << 8) | inb(PIC1_DATA);
+
+    for (int vec = IRQ_BASE; vec < IRQ_BASE + 16; vec++) {
+        register_interrupt_handler(vec, hardware_interrupt_handler);
+    }
 }
 
 void pic_send_eoi(uint8_t n)
