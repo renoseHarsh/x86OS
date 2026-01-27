@@ -1,8 +1,8 @@
 #include "idt.h"
 #include "kprintf.h"
-#include "paging.h"
 #include "pic.h"
 #include "vga.h"
+#include "vmm.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -14,7 +14,7 @@ int kmain()
     init_pic();
     kprintf("PIC initialized.\n");
     __asm__ volatile("sti");
-    init_paging();
+    vmm_init();
     kprintf("Paging initialized.\n");
     for (;;) {
     }

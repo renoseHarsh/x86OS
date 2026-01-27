@@ -4,9 +4,8 @@
 #include "utils.h"
 
 __attribute__((aligned(4096))) pde_t page_directory[1024];
-extern char _kernel_end[];
 
-void enable_paging()
+void refresh_cr3()
 {
     __asm__ volatile("mov %0, %%cr3" : : "r"(V2P(page_directory)));
 }
@@ -51,10 +50,4 @@ void map_range(uint32_t paddr, uint32_t vaddr, size_t size, uint32_t flag)
             size--;
         }
     }
-}
-
-void init_paging()
-{
-    kmemset(page_directory, 0, sizeof(page_directory));
-    page_directory[1023] = V2P(page_directory) | PAGE_PRESENT | PAGE_RW;
 }
