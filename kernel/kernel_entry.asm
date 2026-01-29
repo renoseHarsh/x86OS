@@ -29,9 +29,9 @@ _start:
     or eax, 0x00000010
     mov cr4, eax
 
-    ; 3. Enable paging by setting the PG bit in CR0
+    ; 3. Enable paging and Write protect by setting the PG and WP bit in CR0
     mov eax, cr0
-    or eax, 0x80000000
+    or eax, 0x80010000 
     mov cr0, eax
 
     ; 4. Jump to higher half
