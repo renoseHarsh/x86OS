@@ -1,13 +1,14 @@
-#include "paging.h"
+#include "layout.h"
 #include "pmm.h"
 #include "string.h"
 #include <stdint.h>
 
-extern char _kernel_end[];
-
 // No need to align, as _kernel_end is already page-aligned
 static uint32_t placement_addr = (uint32_t)V2P(_kernel_end);
 
+/*
+ Returns a pointer to a newly allocated page (4KB) of physical memory.
+*/
 void *pmm_alloc_page()
 {
     void *page = (void *)placement_addr;
