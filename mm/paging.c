@@ -1,3 +1,4 @@
+#include "layout.h"
 #include "paging.h"
 #include "pmm.h"
 #include "string.h"
