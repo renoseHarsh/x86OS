@@ -1,3 +1,4 @@
+#include "buddy/buddy.h"
 #include "layout.h"
 #include "paging.h"
 #include "string.h"
@@ -80,4 +81,5 @@ void vmm_init()
     map_bios();
     map_kernel();
     refresh_cr3();
+    init_buddy();
 }
