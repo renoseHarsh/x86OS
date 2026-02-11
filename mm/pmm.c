@@ -16,3 +16,8 @@ void *pmm_alloc_page()
     kmemset((void *)P2V(page), 0, 0x1000);
     return page;
 }
+
+uint32_t get_placement_addr()
+{
+    return placement_addr;
+}
