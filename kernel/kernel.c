@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-int kmain()
+void kmain()
 {
     vga_clear();
     init_idt();
@@ -16,6 +16,4 @@ int kmain()
     __asm__ volatile("sti");
     vmm_init();
     kprintf("Paging initialized.\n");
-    for (;;) {
-    }
 }
