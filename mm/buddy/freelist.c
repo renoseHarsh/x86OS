@@ -18,13 +18,17 @@ void remove_node(Page **head_ref, Page *node)
         pop_node(head_ref);
         return;
     }
+
     Page *next = node->next;
     Page *prev = node->prev;
 
     if (next)
         next->prev = prev;
-    if (next)
-        next->next = next;
+    if (prev)
+        prev->next = next;
+
+    node->next = NULL;
+    node->prev = NULL;
 }
 
 Page *pop_node(Page **head_ref)
