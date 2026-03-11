@@ -18,7 +18,8 @@ static memory_map_t *memory_map = (memory_map_t *)(P2V(0x8004));
 
 Page *free_area[MAX_BUDDY_ORDER + 1] = { NULL };
 Page *page_map;
-int page_n;
+size_t page_n;
+size_t free_pages_count, used_pages_count;
 
 static void make_pages()
 {
@@ -31,7 +32,7 @@ static void make_pages()
     while (pages_needed--)
         pmm_alloc_page();
 
-    for (int i = 0; i < page_n; i++) {
+    for (size_t i = 0; i < page_n; i++) {
         page_map[i].flags = P_KERNEL;
         page_map[i].order = 0;
         page_map[i].next = NULL;
@@ -50,6 +51,7 @@ static void add_pages()
             uint32_t size = BASE_SIZE << i;
             if (IS_ALIGNED(start, size) && start + size <= end) {
                 int idx = real_page_index(start);
+                free_pages_count += (1 << i);
                 page_map[idx].order = i;
                 page_map[idx].flags = P_FREE;
                 int tail_pages = 1 << i;
@@ -93,15 +95,19 @@ void *alloc_pages(const int order)
     }
     top->order = cur_order;
     top->flags = P_USED;
+    used_pages_count += (1 << order);
+    free_pages_count -= (1 << order);
     return (void *)page_map_real(top);
 }
 
 void free_pages(void *addr)
 {
-    uint32_t real_addr = (uint32_t)addr;
+    uintptr_t real_addr = (uintptr_t)addr;
     int index = real_page_index(real_addr);
     Page *top = &page_map[index];
     int cur_order = top->order;
+    used_pages_count -= (1 << cur_order);
+    free_pages_count += (1 << cur_order);
     while (cur_order < MAX_BUDDY_ORDER) {
         int b_index = buddy_index(index);
         Page *buddy = &page_map[b_index];
@@ -127,6 +133,7 @@ void free_pages(void *addr)
 
 void init_buddy()
 {
+    free_pages_count = used_pages_count = 0;
     make_pages();
     add_pages();
 }
