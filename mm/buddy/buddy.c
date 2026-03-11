@@ -1,5 +1,6 @@
-#include "buddy.h"
-#include "freelist.h"
+#include "buddy/buddy.h"
+#include "buddy/freelist.h"
+#include "buddy/test_buddy.h"
 #include "kprintf.h"
 #include "layout.h"
 #include "panic.h"
@@ -136,4 +137,5 @@ void init_buddy()
     free_pages_count = used_pages_count = 0;
     make_pages();
     add_pages();
+    // test_buddy();
 }
