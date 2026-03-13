@@ -1,5 +1,4 @@
 #include "buddy/buddy.h"
-#include "buddy/freelist.h"
 #include "buddy/test_buddy.h"
 #include "kprintf.h"
 #include "layout.h"
@@ -36,8 +35,8 @@ static void make_pages()
     for (size_t i = 0; i < page_n; i++) {
         page_map[i].flags = P_KERNEL;
         page_map[i].order = 0;
-        page_map[i].next = NULL;
-        page_map[i].prev = NULL;
+        page_map[i].node.next = NULL;
+        page_map[i].node.prev = NULL;
     }
 }
 
@@ -59,7 +58,7 @@ static void add_pages()
                 for (int tail = 1; tail < tail_pages; tail++) {
                     page_map[idx + tail].flags = P_TAIL;
                 }
-                push_node(&free_area[i], &page_map[idx]);
+                push_node((Node **)&free_area[i], &page_map[idx].node);
                 start += (BASE_SIZE << i);
                 found = true;
                 break;
@@ -83,7 +82,7 @@ void *alloc_pages(const int order)
         kernel_panic();
     }
 
-    Page *top = pop_node(&free_area[cur_order]);
+    Page *top = (Page *)pop_node((Node **)&free_area[cur_order]);
     while (cur_order > order) {
         cur_order--;
         top->order = cur_order;
@@ -92,7 +91,7 @@ void *alloc_pages(const int order)
         Page *sibling = &page_map[buddy_index(index)];
         sibling->order = cur_order;
         sibling->flags = P_FREE;
-        push_node(&free_area[cur_order], sibling);
+        push_node((Node **)&free_area[cur_order], &sibling->node);
     }
     top->order = cur_order;
     top->flags = P_USED;
@@ -113,7 +112,7 @@ void free_pages(void *addr)
         int b_index = buddy_index(index);
         Page *buddy = &page_map[b_index];
         if (buddy->flags == P_FREE && buddy->order == cur_order) {
-            remove_node(&free_area[cur_order], buddy);
+            remove_node((Node **)&free_area[cur_order], &buddy->node);
             if (b_index < index) {
                 Page *temp = buddy;
                 buddy = top;
@@ -129,7 +128,7 @@ void free_pages(void *addr)
     }
     top->order = cur_order;
     top->flags = P_FREE;
-    push_node(&free_area[cur_order], top);
+    push_node((Node **)&free_area[cur_order], &top->node);
 }
 
 void init_buddy()

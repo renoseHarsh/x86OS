@@ -1,5 +1,4 @@
 #include "buddy/buddy.h"
-#include "buddy/freelist.h"
 #include "buddy/test_buddy.h"
 #include "kprintf.h"
 #include "layout.h"
@@ -153,7 +152,7 @@ bool check_free_areas(size_t *free_area_count)
             }
 
             *free_area_count += (1 << i);
-            cur = cur->next;
+            cur = (Page *)cur->node.next;
         }
     }
 
@@ -195,13 +194,13 @@ bool check()
         return false;
     }
 
-    // if (free_count != free_area_count) {
-    //     kprintf(
-    //         "Free count mismatch: map %u, free areas %u\n", free_count,
-    //         free_area_count
-    //     );
-    //     return false;
-    // }
+    if (free_count != free_area_count) {
+        kprintf(
+            "Free count mismatch: map %u, free areas %u\n", free_count,
+            free_area_count
+        );
+        return false;
+    }
 
     if (used_count != expected_used_count) {
         kprintf(
@@ -253,7 +252,7 @@ void print_all_len()
         Page *cur = free_area[i];
         while (cur) {
             count++;
-            cur = cur->next;
+            cur = (Page *)cur->node.next;
         }
         kprintf("Free area order %d: %d blocks\n", i, count);
     }
@@ -270,7 +269,7 @@ bool verify_final_state()
 {
     for (int i = 0; i <= MAX_BUDDY_ORDER; i++) {
         int len = 0;
-        for (Page *cur = free_area[i]; cur; cur = cur->next)
+        for (Page *cur = free_area[i]; cur; cur = (Page *)cur->node.next)
             len++;
         if (init_state[i] != len) {
             kprintf("State Not Matching\n");
@@ -401,7 +400,7 @@ void test_buddy()
 
     for (int i = 0; i <= MAX_BUDDY_ORDER; i++) {
         int len = 0;
-        for (Page *cur = free_area[i]; cur; cur = cur->next)
+        for (Page *cur = free_area[i]; cur; cur = (Page *)cur->node.next)
             len++;
         init_state[i] = len;
     }
