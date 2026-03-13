@@ -1,7 +1,7 @@
-#include "freelist.h"
+#include "node.h"
 #include <stddef.h>
 
-void push_node(Page **head_ref, Page *node)
+void push_node(Node **head_ref, Node *node)
 {
     node->next = *head_ref;
     node->prev = NULL;
@@ -12,15 +12,15 @@ void push_node(Page **head_ref, Page *node)
     *head_ref = node;
 }
 
-void remove_node(Page **head_ref, Page *node)
+void remove_node(Node **head_ref, Node *node)
 {
     if (node == *head_ref) {
         pop_node(head_ref);
         return;
     }
 
-    Page *next = node->next;
-    Page *prev = node->prev;
+    Node *next = node->next;
+    Node *prev = node->prev;
 
     if (next)
         next->prev = prev;
@@ -31,12 +31,12 @@ void remove_node(Page **head_ref, Page *node)
     node->prev = NULL;
 }
 
-Page *pop_node(Page **head_ref)
+Node *pop_node(Node **head_ref)
 {
     if (!head_ref) {
         return NULL;
     }
-    Page *top = *head_ref;
+    Node *top = *head_ref;
     *head_ref = (*head_ref)->next;
     if (*head_ref) {
         (*head_ref)->prev = NULL;
