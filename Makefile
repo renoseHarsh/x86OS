@@ -56,4 +56,4 @@ run: all
 	$(QEMU) -drive format=raw,file=$(FINAL)
 
 debug: all
-	$(QEMU) -drive format=raw,file=$(FINAL) -s -S & gdb "build/kernel.elf" -ex "target remote localhost:1234"; kill $!
+	$(QEMU) -drive format=raw,file=$(FINAL) -s -S & gdb "build/kernel.elf" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true
