@@ -5,6 +5,7 @@
 #include "layout.h"
 #include "node.h"
 #include "paging.h"
+#include "panic.h"
 #include "string.h"
 #include "utils.h"
 #include <stdbool.h>
@@ -137,6 +138,8 @@ void *kmalloc(size_t size)
 
     size_t alloc_size = ALIGN_UP(size, ALIGN);
     int order = get_alloc_order(alloc_size);
+    if (order >= NUM_SIZES)
+        return NULL;
     size_t total_size = alloc_size + HEADER_SIZE;
 
     Chunk *chunk = NULL;
@@ -148,8 +151,20 @@ void *kmalloc(size_t size)
         }
     }
 
-    if (!chunk)
-        return NULL;
+    if (!chunk) {
+        create_chunk();
+        for (int i = order; i < NUM_SIZES; i++) {
+            if (free_bucket[i]) {
+                chunk = pop_free_chunk(i);
+                break;
+            }
+        }
+    }
+
+    if (!chunk) {
+        kprintf("OUT OF MEMORY");
+        kernel_panic();
+    }
 
     chunk->used = true;
 
@@ -194,6 +209,26 @@ Chunk *get_chunk_offset(void *ptr)
     return (Chunk *)((uintptr_t)ptr - HEADER_SIZE);
 }
 
+void return_page(Node *f_block)
+{
+    Node *m_block = f_block->next;
+    Node *l_block = m_block->next;
+
+    remove_node((Node **)&first, m_block);
+    mem_meta -= HEADER_SIZE;
+
+    remove_node((Node **)first, f_block);
+    mem_meta -= (HEADER_SIZE + MIN_SIZE);
+
+    if ((Node *)last == l_block) {
+        last = (Chunk *)l_block->prev;
+    }
+    remove_node((Node **)first, l_block);
+    mem_meta -= (HEADER_SIZE + MIN_SIZE);
+
+    free_pages((void *)V2P(f_block));
+}
+
 void kfree(void *ptr)
 {
     Chunk *chunk = get_chunk_offset(ptr);
@@ -216,10 +251,19 @@ void kfree(void *ptr)
         chunk = prev;
     }
 
+    size_t chunk_size = get_chunk_size(chunk);
+
+    if (chunk_size
+            == (PAGE_SIZE - (2 * (HEADER_SIZE + MIN_SIZE)) - HEADER_SIZE)
+        && chunk->all.prev != (Node *)first) {
+        return_page(chunk->all.prev);
+        return;
+    }
+
     chunk->used = false;
 
     push_node(&free_bucket[get_bucket_index(chunk)], &chunk->free);
-    mem_free += get_chunk_size(chunk);
+    mem_free += chunk_size;
 }
 
 void print_stats()

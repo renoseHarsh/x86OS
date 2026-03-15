@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 extern size_t mem_free, mem_used, mem_meta, used_pages_count;
+extern void *first, *last;
 extern void print_stats();
 
 #define SEED 2324
@@ -15,6 +16,7 @@ extern void print_stats();
 #define MAX_ITERATIONS 1000
 size_t tracking = 0;
 size_t ini_mem_used, ini_mem_free, ini_mem_meta;
+void *ini_first, *ini_last;
 
 typedef struct {
     void *ptr;
@@ -100,24 +102,15 @@ static bool check_state()
 
 static bool check_ini()
 {
-    if (mem_used != ini_mem_used) {
+    if (mem_used != ini_mem_used || mem_free != ini_mem_free
+        || mem_meta != ini_mem_meta || first != ini_first
+        || last != ini_last) {
         kprintf(
-            "Memory used mismatch: initial=%d, final=%d\n", ini_mem_used,
-            mem_used
-        );
-        return false;
-    }
-    if (mem_free != ini_mem_free) {
-        kprintf(
-            "Memory free mismatch: initial=%d, final=%d\n", ini_mem_free,
-            mem_free
-        );
-        return false;
-    }
-    if (mem_meta != ini_mem_meta) {
-        kprintf(
-            "Memory meta mismatch: initial=%d, final=%d\n", ini_mem_meta,
-            mem_meta
+            "Memory state mismatch: used: %d vs %d, free: %d vs %d, meta: %d "
+            "vs %d, first: %x vs %x, last: %x vs %x\n",
+            ini_mem_used, mem_used, ini_mem_free, mem_free, ini_mem_meta,
+            mem_meta, (uint32_t)ini_first, (uint32_t)first, (uint32_t)ini_last,
+            (uint32_t)last
         );
         return false;
     }
@@ -133,6 +126,8 @@ void test_heap()
     ini_mem_used = mem_used;
     ini_mem_free = mem_free;
     ini_mem_meta = mem_meta;
+    ini_first = first;
+    ini_last = last;
 
     for (int i = 0; i < MAX_BLOCKS; i++) {
         blocks[i].ptr = NULL;
