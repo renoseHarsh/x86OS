@@ -43,3 +43,16 @@ Node *pop_node(Node **head_ref)
     }
     return top;
 }
+
+void insert_node(Node *prev, Node *node)
+{
+    Node *next = prev->next;
+
+    prev->next = node;
+    node->prev = prev;
+
+    if (next) {
+        node->next = next;
+        next->prev = node;
+    }
+}
