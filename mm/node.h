@@ -8,3 +8,4 @@ typedef struct Node {
 void push_node(Node **head_ref, Node *node);
 void remove_node(Node **head_ref, Node *node);
 Node *pop_node(Node **head_ref);
+void insert_node(Node *prev, Node *node);

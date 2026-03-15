@@ -1,4 +1,5 @@
 #include "buddy/buddy.h"
+#include "heap/heap.h"
 #include "layout.h"
 #include "paging.h"
 #include "string.h"
@@ -82,4 +83,5 @@ void vmm_init()
     map_kernel();
     refresh_cr3();
     init_buddy();
+    init_kmalloc();
 }
