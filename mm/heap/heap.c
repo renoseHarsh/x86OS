@@ -33,42 +33,17 @@ Chunk *first, *last;
 size_t mem_free = 0, mem_used = 0, mem_meta = 0;
 extern size_t used_pages_count;
 
-int log_two(size_t size)
-{
-    int order = -1;
-    while (size) {
-        size >>= 1;
-        order++;
-    }
-    if (order == -1)
-        return 0;
-    return order;
-}
+#define log_two(size) (31 - __builtin_clz(size))
 
-size_t get_total_size(Chunk *chunk)
-{
-    return (uintptr_t)chunk->all.next - (uintptr_t)chunk;
-}
+#define get_total_size(chunk) ((uintptr_t)chunk->all.next - (uintptr_t)chunk)
 
-size_t get_chunk_size(Chunk *chunk)
-{
-    return get_total_size(chunk) - HEADER_SIZE;
-}
+#define get_chunk_size(chunk) (get_total_size(chunk) - HEADER_SIZE)
 
-int get_bucket_index(Chunk *chunk)
-{
-    size_t size = get_chunk_size(chunk);
-    int order = log_two(size);
-    return order - ORDER_OFFSET;
-}
+#define get_bucket_index(chunk) (log_two(get_chunk_size(chunk)) - ORDER_OFFSET)
 
-int get_alloc_order(size_t size)
-{
-    int order = log_two(size);
-    if (IS_ALIGNED(size, size))
-        return order - ORDER_OFFSET;
-    return order + 1 - ORDER_OFFSET;
-}
+#define get_alloc_order(size) (log_two(size - 1) + 1 - ORDER_OFFSET)
+
+#define get_chunk_offset(ptr) ((Chunk *)((uintptr_t)ptr - HEADER_SIZE))
 
 Chunk *create_chunk()
 {
@@ -169,11 +144,6 @@ void *kmalloc(size_t size)
     mem_used += get_chunk_size(chunk);
 
     return chunk->data;
-}
-
-Chunk *get_chunk_offset(void *ptr)
-{
-    return (Chunk *)((uintptr_t)ptr - HEADER_SIZE);
 }
 
 void return_page(Node *f_block)
