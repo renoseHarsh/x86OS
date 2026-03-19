@@ -1,3 +1,4 @@
+#include "serial.h"
 #include "vga.h"
 #include <stdarg.h>
 #include <stdbool.h>
@@ -5,13 +6,19 @@
 
 static const char *digits = "0123456789ABCDEF";
 
+static void put_c(char c)
+{
+    vga_putc(c);
+    seriel_putc(c);
+}
+
 static int print_unsigned(uint64_t n, int base)
 {
     char buf[64];
     int i = 0;
 
     if (n == 0) {
-        vga_putc('0');
+        put_c('0');
         return 1;
     }
 
@@ -23,7 +30,7 @@ static int print_unsigned(uint64_t n, int base)
     int count = 0;
     while (i--) {
         count++;
-        vga_putc(buf[i]);
+        put_c(buf[i]);
     }
     return count;
 }
@@ -32,7 +39,7 @@ static int print_signed(int64_t n)
 {
     if (n < 0) {
         int count = 1;
-        vga_putc('-');
+        put_c('-');
         return count + print_unsigned((uint64_t)(-n), 10);
     }
     return print_unsigned((uint64_t)n, 10);
@@ -42,7 +49,7 @@ static int print_str(const char *str)
 {
     int count = 0;
     while (*str != '\0') {
-        vga_putc(*str++);
+        put_c(*str++);
         count++;
     }
     return count;
@@ -96,7 +103,7 @@ int kprintf(const char *fmt, ...)
             }
             case 'c': {
                 count++;
-                vga_putc((char)va_arg(args, int));
+                put_c((char)va_arg(args, int));
                 break;
             }
             case 's': {
@@ -104,24 +111,24 @@ int kprintf(const char *fmt, ...)
                 break;
             }
             case '%': {
-                vga_putc('%');
+                put_c('%');
                 count++;
                 break;
             }
             default: {
-                vga_putc('%');
+                put_c('%');
                 if (long_check) {
-                    vga_putc('l');
+                    put_c('l');
                     count++;
                 }
-                vga_putc(*fmt);
+                put_c(*fmt);
 
                 count += 2; // for '%' and the character
                 break;
             }
             }
         } else {
-            vga_putc(*fmt);
+            put_c(*fmt);
             count++;
         }
         fmt++;

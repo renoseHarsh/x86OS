@@ -1,6 +1,7 @@
 #include "idt.h"
 #include "kprintf.h"
 #include "pic.h"
+#include "serial.h"
 #include "vga.h"
 #include "vmm.h"
 #include <stdbool.h>
@@ -8,6 +9,7 @@
 
 void kmain()
 {
+    seriel_init();
     vga_clear();
     init_idt();
     kprintf("IDT initialized.\n");

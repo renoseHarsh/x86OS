@@ -3,3 +3,4 @@ opt/
 .cache/
 
 compile_commands.json
+output.log
