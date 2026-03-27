@@ -56,9 +56,10 @@ HigherHalf:
     invlpg [0]
 
     call kmain
+    .hang:
+        hlt
+        jmp .hang
 
-    cli
-    hlt
 
 ; Put the stack in hgiher half, save 16kib for it
 ; Allign it to 16 bytes, since GCC needs esp to be alligned to 16 bytes before calling functions
