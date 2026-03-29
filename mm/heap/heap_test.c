@@ -8,10 +8,9 @@
 
 extern size_t mem_free, mem_used, mem_meta, used_pages_count;
 extern void *first, *last;
-extern void print_stats();
 
 #define SEED 2324
-#define MAX_MEMORY 500
+#define MAX_MEMORY 0x2000
 #define MAX_BLOCKS 500
 #define MAX_ITERATIONS 1000
 size_t tracking = 0;

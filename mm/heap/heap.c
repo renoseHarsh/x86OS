@@ -9,6 +9,7 @@
 #include "string.h"
 #include "utils.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     Node all;
@@ -96,6 +97,14 @@ void *kmalloc(size_t size)
     if (size < MIN_SIZE)
         size = MIN_SIZE;
 
+    if (size >= 0x1000) {
+        size_t order = log_two(size - 1) + 1 - BASE_SHIFT;
+        void *ptr = (void *)P2V(alloc_pages(order));
+        if (ptr)
+            mem_used += (1 << (BASE_SHIFT + order));
+        return ptr;
+    }
+
     size_t alloc_size = ALIGN_UP(size, ALIGN);
     int order = get_alloc_order(alloc_size);
     if (order >= NUM_SIZES)
@@ -168,6 +177,14 @@ void return_page(Node *f_block)
 
 void kfree(void *ptr)
 {
+    if (IS_ALIGNED((uintptr_t)ptr, BASE_SIZE)) {
+        uintptr_t addr = V2P(ptr);
+        size_t order = get_order_addr(addr);
+        mem_used -= (1 << (order + BASE_SHIFT));
+        free_pages((void *)V2P(ptr));
+        return;
+    }
+
     Chunk *chunk = get_chunk_offset(ptr);
     Chunk *next = (Chunk *)chunk->all.next;
     Chunk *prev = (Chunk *)chunk->all.prev;

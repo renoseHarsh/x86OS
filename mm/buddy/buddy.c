@@ -71,6 +71,12 @@ static void add_pages()
     }
 }
 
+size_t get_order_addr(uintptr_t addr)
+{
+    size_t idx = real_page_index(addr);
+    return page_map[idx].order;
+}
+
 void *alloc_pages(const int order)
 {
     int cur_order = order;

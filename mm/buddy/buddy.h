@@ -1,6 +1,7 @@
 #pragma once
 
 #include "node.h"
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct Page {
@@ -22,3 +23,4 @@ typedef struct Page {
 void init_buddy();
 void *alloc_pages(const int order);
 void free_pages(void *addr);
+size_t get_order_addr(uintptr_t addr);
