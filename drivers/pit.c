@@ -1,11 +1,7 @@
-#include "pic.h"
 #include "pit.h"
 #include "ports.h"
-
-static void pit_irq_handler(register_t *_)
-{
-    // Todo Scheduler
-}
+#include <stddef.h>
+#include <stdint.h>
 
 void init_pit(uint32_t hz)
 {
@@ -13,6 +9,4 @@ void init_pit(uint32_t hz)
     outb(0x43, 0x34); // channel 0, lobyte/hibyte access, rate generator
     outb(0x40, divisor & 0xFF);
     outb(0x40, divisor >> 8);
-
-    register_request_handler(0, pit_irq_handler);
 }

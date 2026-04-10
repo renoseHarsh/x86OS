@@ -50,6 +50,7 @@ HigherHalf:
     add eax, KERNE_VIRTUAL_ADDR
     mov [esp + 2], eax
     lgdt [esp]                      
+    add esp, 6
 
     ; 6. Unmap the first page
     mov dword [page_directory], 0x0

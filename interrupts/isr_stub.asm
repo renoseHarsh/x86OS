@@ -1,18 +1,24 @@
 extern interrupt_handler
+global current_sp
+
+section .bss
+    current_sp: resd 1
+
+section .text
 
 isr_wrapper:
     cld
 
     pusha
 
+    mov [current_sp], esp
     push esp        ; Pass pointer to stack arguments
     call interrupt_handler
     add esp, 4      ; Drop the pointer argument
 
+    mov esp, [current_sp]
     popa
-    
     add esp, 8      ; Drop error code and interrupt number
-
     iret
 
 
