@@ -1,19 +1,18 @@
+#include "sched.h"
+#include "dlist.h"
 #include "heap.h"
 #include "isr.h"
-#include "kprintf.h"
 #include "pic.h"
-#include "queue.h"
-#include "sched.h"
 #include "thread.h"
 #include <stddef.h>
 #include <stdint.h>
 
-Que que;
+DList que;
 
 Thread *get_next_thread()
 {
     Thread *next = (Thread *)que.head;
-    que_pop(&que);
+    list_pop_front(&que);
     return next;
 }
 
@@ -29,7 +28,6 @@ void scheduler(register_t *_)
     }
     if (cur_thread->status == TERMINATED) {
         free_stack(cur_thread);
-        kprintf("Thread %d ended\n", cur_thread->id);
         kfree(cur_thread);
     } else {
         cur_thread->esp = current_sp;
@@ -51,7 +49,7 @@ void init_sched()
 
 void sched_enqueue(Thread *thread)
 {
-    que_push(&que, (Node *)thread);
+    list_push_back(&que, (Node *)thread);
 }
 
 void create_thread(void (*entry_point)(void *), void *arg)
