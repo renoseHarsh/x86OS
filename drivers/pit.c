@@ -6,10 +6,13 @@
 #include <stdint.h>
 
 uint16_t divisor;
+uint64_t ticks;
+
 extern void scheduler();
 
 void timer(register_t *_)
 {
+    ticks += divisor;
     scheduler();
 }
 

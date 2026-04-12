@@ -3,11 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum {
-    RUNNABLE,  // Ready to run (waiting for CPU time)
-    RUNNING,   // Currently executing on a CPU core
-    TERMINATED // Execution finished or aborted
-} ThreadStatus;
+typedef enum { RUNNABLE, RUNNING, SLEEPING, TERMINATED } ThreadStatus;
 
 typedef struct {
     Node que;
@@ -15,6 +11,7 @@ typedef struct {
     ThreadStatus status;
     uintptr_t stack;
     uintptr_t esp;
+    uint64_t wake_at;
 } Thread;
 
 void create_stack(void (*entry_point)(void *), void *arg, Thread *thread);
