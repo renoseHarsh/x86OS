@@ -2,12 +2,13 @@
 #include "dlist.h"
 #include "heap.h"
 #include "isr.h"
-#include "pic.h"
 #include "thread.h"
 #include <stddef.h>
 #include <stdint.h>
 
 DList que;
+extern uintptr_t current_sp;
+Thread *cur_thread = NULL;
 
 Thread *get_next_thread()
 {
@@ -16,9 +17,7 @@ Thread *get_next_thread()
     return next;
 }
 
-extern uintptr_t current_sp;
-Thread *cur_thread = NULL;
-void scheduler(register_t *_)
+void scheduler()
 {
     if (!cur_thread) {
         cur_thread = kmalloc(sizeof(Thread));
@@ -39,12 +38,14 @@ void scheduler(register_t *_)
     current_sp = cur_thread->esp;
 }
 
+void yield_interrupt_handler(register_t *_)
+{
+    scheduler();
+}
+
 void init_sched()
 {
-    que.head = NULL;
-    que.tail = NULL;
-    que.size = 0;
-    register_request_handler(0, &scheduler);
+    register_interrupt_handler(0x81, &yield_interrupt_handler);
 }
 
 void sched_enqueue(Thread *thread)

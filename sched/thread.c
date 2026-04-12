@@ -1,6 +1,6 @@
+#include "thread.h"
 #include "heap.h"
 #include "panic.h"
-#include "thread.h"
 #include <stdint.h>
 
 size_t thread_id = 1;
@@ -9,7 +9,7 @@ void thread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
 {
     entry_point(arg);
     thread->status = TERMINATED;
-    asm __volatile__("int $0x20");
+    asm __volatile__("int $0x81");
     kernel_panic();
 }
 
