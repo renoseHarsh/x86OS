@@ -23,7 +23,7 @@ KERNEL_HEADERS  := $(shell find $(SRC_DIRS) -type f -name '*.h')
 KERNEL_ASM      := $(shell find $(SRC_DIRS) -type f -name '*.asm')
 KERNEL_OBJ      := $(addprefix build/, $(notdir $(KERNEL_SOURCE:.c=.o)))
 KERNEL_OBJ      += $(addprefix build/, $(notdir $(KERNEL_ASM:.asm=.o)))
-FINAL           := build/bootbable.bin
+FINAL           := build/bootable.bin
 
 ### Makefile Rules ###
 all: $(FINAL) 

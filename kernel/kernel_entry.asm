@@ -3,8 +3,8 @@ global _start
 extern kmain
 
 ; Constants
-KERNE_VIRTUAL_ADDR equ 0xC0000000
-PAGE_DIR_IDX equ KERNE_VIRTUAL_ADDR >> 22
+KERNEL_VIRTUAL_ADDR equ 0xC0000000
+PAGE_DIR_IDX equ KERNEL_VIRTUAL_ADDR >> 22
 
 section .data
 align 4096
@@ -21,7 +21,7 @@ page_directory:
 section .text
 _start:
     ; 1. Load the page directory into CR3
-    mov ecx, (page_directory - KERNE_VIRTUAL_ADDR)
+    mov ecx, (page_directory - KERNEL_VIRTUAL_ADDR)
     mov cr3, ecx
 
     ; 2. Enable PSE by setting the PSE bit in CR4, so we can use 4MB pages
@@ -47,7 +47,7 @@ HigherHalf:
     sub esp, 6
     sgdt [esp]                      ; Store current GDT descriptor
     mov eax, [esp + 2]              ; Extract the base address
-    add eax, KERNE_VIRTUAL_ADDR
+    add eax, KERNEL_VIRTUAL_ADDR
     mov [esp + 2], eax
     lgdt [esp]                      
     add esp, 6
