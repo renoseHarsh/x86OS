@@ -1,6 +1,8 @@
 [bits 32]
+extern test
 global _start
 extern kmain
+extern init_gdt
 
 ; Constants
 KERNEL_VIRTUAL_ADDR equ 0xC0000000
@@ -44,27 +46,29 @@ HigherHalf:
     mov ebp, esp
 
     ; 5. Update the GDT segment selectors
-    sub esp, 6
-    sgdt [esp]                      ; Store current GDT descriptor
-    mov eax, [esp + 2]              ; Extract the base address
-    add eax, KERNEL_VIRTUAL_ADDR
-    mov [esp + 2], eax
-    lgdt [esp]                      
-    add esp, 6
+    call init_gdt
 
     ; 6. Unmap the first page
     mov dword [page_directory], 0x0
     invlpg [0]
 
     call kmain
+
+    push (4 << 3) | 3
+    push kernel_stack
+    push 0x202
+    push (3 << 3) | 3
+    push test
+    iret
+
     .hang:
         hlt
         jmp .hang
 
 
-; Put the stack in hgiher half, save 16kib for it
 ; Allign it to 16 bytes, since GCC needs esp to be alligned to 16 bytes before calling functions
 section .bss
 align 0x10
 resb 0x4000
 stack_top:
+resb 0x1000

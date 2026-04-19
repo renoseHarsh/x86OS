@@ -1,3 +1,4 @@
+#include "gdt.h"
 #include "idt.h"
 #include "kprintf.h"
 #include "pic.h"
@@ -22,4 +23,9 @@ void kmain()
     __asm__ volatile("sti");
     init_pit(100);
     init_sched();
+    init_tss();
+}
+
+void test()
+{
 }
