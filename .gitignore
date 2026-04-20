@@ -3,4 +3,6 @@ opt/
 .cache/
 
 compile_commands.json
-output.log
+serial.log
+os.iso
+isodir/

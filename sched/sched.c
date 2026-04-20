@@ -1,8 +1,8 @@
-#include "sched.h"
 #include "dlist.h"
-#include "heap.h"
+#include "heap/heap.h"
 #include "isr.h"
 #include "pit.h"
+#include "sched.h"
 #include "thread.h"
 #include <stddef.h>
 #include <stdint.h>

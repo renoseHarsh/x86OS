@@ -2,38 +2,39 @@ extern interrupt_handler
 global current_sp
 
 section .bss
-    current_sp: resd 1
+current_sp: resd 1
 
 section .text
 
 isr_wrapper:
-    cld
+	cld
 
-    pusha
+	pusha
 
-    mov [current_sp], esp
-    push esp        ; Pass pointer to stack arguments
-    call interrupt_handler
-    add esp, 4      ; Drop the pointer argument
+	mov  [current_sp], esp
+	push esp; Pass pointer to stack arguments
+	call interrupt_handler
+	add  esp, 4; Drop the pointer argument
 
-    mov esp, [current_sp]
-    popa
-    add esp, 8      ; Drop error code and interrupt number
-    iret
+	mov esp, [current_sp]
+	popa
+	add esp, 8; Drop error code and interrupt number
+	iret
 
+	;      ISR stubs for interrupts with and without error codes
+	%macro isr_err_stub 1
 
-; ISR stubs for interrupts with and without error codes
-%macro isr_err_stub 1
 isr_stub_%+%1:
-    push %1                     ; Push interrupt number
-    jmp isr_wrapper
+	push %1; Push interrupt number
+	jmp  isr_wrapper
 %endmacro
 
 %macro isr_no_err_stub 1
+
 isr_stub_%+%1:
-    push 0                      ; Push dummy error code
-    push %1                     ; Push interrupt number
-    jmp isr_wrapper
+	push 0; Push dummy error code
+	push %1; Push interrupt number
+	jmp  isr_wrapper
 %endmacro
 
 isr_no_err_stub 0
@@ -59,16 +60,16 @@ isr_no_err_stub 19
 isr_no_err_stub 20
 isr_err_stub    21
 %assign i 22
-%rep 234
-    isr_no_err_stub i
+%rep    234
+isr_no_err_stub i
 %assign i i+1
 %endrep
 
-
 global isr_stub_table
+
 isr_stub_table:
-    %assign i 0
-    %rep 256
-        dd isr_stub_%+i
-        %assign i i + 1
-    %endrep
+	%assign i 0
+	%rep    256
+	dd      isr_stub_%+i
+	%assign i i + 1
+	%endrep

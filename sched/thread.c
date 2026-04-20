@@ -1,6 +1,6 @@
-#include "thread.h"
-#include "heap.h"
+#include "heap/heap.h"
 #include "panic.h"
+#include "thread.h"
 #include <stdint.h>
 
 size_t thread_id = 1;

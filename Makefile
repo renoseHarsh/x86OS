@@ -1,59 +1,63 @@
 ### Speicifies the tools to be used ###
 ASM     := nasm
 CC      := i686-elf-gcc
-LD      := i686-elf-ld
-OBJCOPY := i686-elf-objcopy
+GDB     := i686-elf-gdb
 QEMU    := qemu-system-i386
 
 # --- Project Structure ---
-SRC_DIRS := $(shell find kernel drivers lib mm interrupts -type d)
+SRC_DIRS := kernel drivers lib mm interrupts sched gdt
+INCLUDES := $(addprefix -I, $(SRC_DIRS))
+ 
 
 # --- Flags ---
-INCLUDES := $(addprefix -I, $(SRC_DIRS))
-CFLAGS   := -O0 -ffreestanding -m32 -g -c -Wall -Wextra $(INCLUDES)
+CFLAGS   := -O0 -ffreestanding -m32 -g -c -Wall -Wextra -Wno-unused $(INCLUDES)
 LDFLAGS  := -T linker.ld -ffreestanding -nostdlib -lgcc -m32
 
-# --- Search Path ---
-VPATH := $(SRC_DIRS)
+# --- Files ---
+ISO_NAME    	:= os.iso
+ISO_DIR 		:= isodir
+KERNEL_BIN      := $(ISO_DIR)/boot/kernel.elf
+GRUB_CFG_SRC    := grub.cfg
+GRUB_CFG_DST    := $(ISO_DIR)/boot/grub/grub.cfg
 
-### All files needed for bootloader and kernel ###
-BOOT_SOURCE     := $(wildcard boot/*.asm) 
+# Dynamically find sources
 KERNEL_SOURCE   := $(shell find $(SRC_DIRS) -type f -name '*.c')
-KERNEL_HEADERS  := $(shell find $(SRC_DIRS) -type f -name '*.h') 
 KERNEL_ASM      := $(shell find $(SRC_DIRS) -type f -name '*.asm')
-KERNEL_OBJ      := $(addprefix build/, $(notdir $(KERNEL_SOURCE:.c=.o)))
-KERNEL_OBJ      += $(addprefix build/, $(notdir $(KERNEL_ASM:.asm=.o)))
-FINAL           := build/bootable.bin
 
-### Makefile Rules ###
-all: $(FINAL) 
+# Map object files
+KERNEL_OBJ      := $(patsubst %.c, build/%.o, $(KERNEL_SOURCE))
+KERNEL_OBJ      += $(patsubst %.asm, build/%.o, $(KERNEL_ASM))
 
-$(FINAL): build/boot.bin build/kernel.bin
-	cat $^ > $@
-	truncate -s 1MB $@
+# --- Targets ---
+.PHONY: all clean run debug
 
-build/boot.bin: $(BOOT_SOURCE)
-	mkdir -p build
-	$(ASM) -f bin boot/boot.asm -o $@ -l build/boot.lst 
+all: $(ISO_NAME)
 
-build/kernel.bin: build/kernel.elf
-	$(OBJCOPY) -O binary $< $@
+$(ISO_NAME): $(KERNEL_BIN) $(GRUB_CFG_DST)
+	i686-elf-grub-mkrescue -o $@ $(ISO_DIR)
 
-build/kernel.elf: build/kernel_entry.o $(filter-out build/kernel_entry.o, $(KERNEL_OBJ))
+$(KERNEL_BIN): $(KERNEL_OBJ) | $(ISO_DIR)/boot
 	$(CC) $^ $(LDFLAGS) -o $@
 
-build/%.o: %.asm
-	$(ASM) -f elf32 $< -o $@
+build/%.o: %.asm | build
+	@mkdir -p $(dir $@)
+	$(ASM) -g -f elf32 $< -o $@
 
-build/%.o: %.c
+build/%.o: %.c | build
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $< -o $@
 
-clean:
-	rm -rf build/*
+$(GRUB_CFG_DST): $(GRUB_CFG_SRC) | $(ISO_DIR)/boot/grub
+	cp $< $@
 
+build $(ISO_DIR)/boot $(ISO_DIR)/boot/grub:
+	mkdir -p $@
+
+clean:
+	rm -rf build $(ISO_DIR) $(ISO_NAME) serial.log
 
 run: all
-	$(QEMU) -drive format=raw,file=$(FINAL) -serial file:output.log
+	$(QEMU) -cdrom $(ISO_NAME) -serial file:serial.log
 
 debug: all
-	$(QEMU) -drive format=raw,file=$(FINAL) -s -S & gdb "build/kernel.elf" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true
+	$(QEMU) -cdrom $(ISO_NAME) -s -S & gdb "$(KERNEL_BIN)" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true

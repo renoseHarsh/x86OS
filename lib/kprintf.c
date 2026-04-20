@@ -93,6 +93,9 @@ int kprintf(const char *fmt, ...)
                 break;
             }
             case 'x': {
+                put_c('0');
+                put_c('x');
+                count += 2;
                 if (long_flag)
                     count += print_unsigned(va_arg(args, uint64_t), 16);
                 else

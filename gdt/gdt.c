@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+extern void gdt_flush(uint32_t gdt_ptr);
+
 GDT_SEGMENT gdt[6];
 GDT_DESCRIPTOR gdtr;
 TSS_ENTRY tss;
@@ -38,7 +40,7 @@ void init_gdt()
     gdtr.offset = (uint32_t)gdt;
     gdtr.size = sizeof(gdt) - 1;
 
-    __asm__ volatile("lgdt %0" ::"m"(gdtr));
+    gdt_flush((uint32_t)&gdtr);
 }
 
 void init_tss()

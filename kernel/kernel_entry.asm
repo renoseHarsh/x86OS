@@ -1,3 +1,17 @@
+section .multiboot_header
+align 8
+header_start:
+    dd 0xE85250D6 
+    dd 0
+    dd header_end - header_start
+    dd -(0xE85250D6 + 0 + (header_end - header_start))
+
+    align 8
+    dw 0
+    dw 0
+    dd 8
+header_end:
+
 [bits 32]
 extern test
 global _start
@@ -61,14 +75,17 @@ HigherHalf:
     push test
     iret
 
+
     .hang:
         hlt
         jmp .hang
 
 
+; Put the stack in hgiher half, save 16kib for it
 ; Allign it to 16 bytes, since GCC needs esp to be alligned to 16 bytes before calling functions
 section .bss
 align 0x10
-resb 0x4000
+    resb 0x4000
 stack_top:
 resb 0x1000
+kernel_stack
