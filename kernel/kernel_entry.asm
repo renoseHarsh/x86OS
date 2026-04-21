@@ -36,6 +36,11 @@ page_directory:
 
 section .text
 _start:
+
+    mov esi, eax
+    mov edi, ebx
+    add edi, 0xC0000000
+
     ; 1. Load the page directory into CR3
     mov ecx, (page_directory - KERNEL_VIRTUAL_ADDR)
     mov cr3, ecx
@@ -66,15 +71,10 @@ HigherHalf:
     mov dword [page_directory], 0x0
     invlpg [0]
 
+    push edi
+    push esi
     call kmain
-
-    push (4 << 3) | 3
-    push kernel_stack
-    push 0x202
-    push (3 << 3) | 3
-    push test
-    iret
-
+    add esp, 8
 
     .hang:
         hlt
@@ -87,5 +87,3 @@ section .bss
 align 0x10
     resb 0x4000
 stack_top:
-resb 0x1000
-kernel_stack

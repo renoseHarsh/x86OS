@@ -4,12 +4,12 @@ SECTIONS
 {
     . = 0xC0100000;
 
+    _ro_start = .;
     _kernel_start = .;
     .multiboot_header ALIGN(8) : AT(ADDR(.multiboot_header)-0xC0000000) {
         *(.multiboot_header)
     }
 
-    _ro_start = .;
     /* Code section */
     .text ALIGN(0x1000) : AT(ADDR(.text)-0xC0000000) {
         *(.text)

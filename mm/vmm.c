@@ -1,12 +1,14 @@
 #include "buddy/buddy.h"
 #include "heap/heap.h"
+#include "kprintf.h"
 #include "layout.h"
 #include "paging.h"
 #include "string.h"
 #include "vmm.h"
+#include <stddef.h>
 #include <stdint.h>
 
-static memory_map_t *memory_map = (memory_map_t *)(P2V(0x8004));
+extern memory_map_t memory_map[];
 
 static void map_bios()
 {

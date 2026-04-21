@@ -14,7 +14,7 @@
 #define buddy_index(idx) ((idx) ^ (1 << page_map[(idx)].order))
 #define page_map_real(top) (0x1000 * page_map_index(top))
 
-static memory_map_t *memory_map = (memory_map_t *)(P2V(0x8004));
+extern memory_map_t memory_map[];
 
 Page *free_area[MAX_BUDDY_ORDER + 1] = { NULL };
 Page *page_map;
@@ -43,7 +43,7 @@ static void make_pages()
 static void add_pages()
 {
     uint32_t start = get_placement_addr();
-    uint32_t end = (uint32_t)memory_map[3].addr + memory_map[3].size;
+    uint32_t end = memory_map[3].addr + memory_map[3].size;
 
     while (start < end) {
         bool found = false;

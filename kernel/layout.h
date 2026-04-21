@@ -18,5 +18,5 @@ typedef struct {
     uint64_t addr;
     uint64_t size;
     uint32_t type;
-    uint32_t acpi;
+    uint32_t reserved;
 } __attribute__((packed)) memory_map_t;
