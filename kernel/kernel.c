@@ -1,7 +1,9 @@
+#include "buddy/buddy.h"
 #include "gdt.h"
 #include "idt.h"
 #include "kprintf.h"
 #include "layout.h"
+#include "paging.h"
 #include "panic.h"
 #include "pic.h"
 #include "pit.h"
@@ -32,6 +34,8 @@ typedef struct {
 } multiboot_tag_mmap;
 
 memory_map_t memory_map[6];
+
+void perform_jump();
 
 void kmain(uint32_t magic, uint32_t mbi_ptr)
 {
@@ -70,4 +74,20 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_pit(100);
     init_sched();
     init_tss();
+    perform_jump();
+}
+
+extern void jump_usermode(uintptr_t eip, uintptr_t esp);
+void perform_jump()
+{
+    uintptr_t page = (uintptr_t)alloc_pages(0);
+    map_range(page, 0x40000000, 1, PAGE_PRESENT | PAGE_RW | PAGE_USER);
+    refresh_cr3();
+    char *code = (char *)0x40000000;
+    code[0] = 0xCD; // int
+    code[1] = 0x80; // 0x80
+    code[2] = 0xEB; // jmp
+    code[3] = 0xFE; // $
+    uintptr_t user_stack = 0x40000000 + 0x1000;
+    jump_usermode((uintptr_t)code, user_stack);
 }
