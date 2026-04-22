@@ -38,7 +38,7 @@ void map_range(uint32_t paddr, uint32_t vaddr, size_t size, uint32_t flag)
                 if (!(page_directory[pde] & PAGE_PRESENT)) {
                     pde_t page_table_addr = (uint32_t)pmm_alloc_page();
                     page_directory[pde]
-                        = page_table_addr | PAGE_PRESENT | PAGE_RW;
+                        = page_table_addr | PAGE_PRESENT | PAGE_RW | flag;
                 }
                 page_table = (pte_t *)P2V(page_directory[pde] & PAGE_MASK);
             }
