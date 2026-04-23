@@ -39,7 +39,6 @@ _start:
 
     mov esi, eax
     mov edi, ebx
-    add edi, 0xC0000000
 
     ; 1. Load the page directory into CR3
     mov ecx, (page_directory - KERNEL_VIRTUAL_ADDR)

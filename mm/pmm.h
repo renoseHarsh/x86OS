@@ -1,6 +1,15 @@
 #pragma once
+#include "buddy/buddy.h"
 
-#include <stdint.h>
+#include <stddef.h>
 
-void *pmm_alloc_page();
-uint32_t get_placement_addr();
+static inline void *pmm_alloc(size_t order)
+{
+    return buddy_alloc_pages(order);
+}
+
+static inline void pmm_free(void *ptr)
+{
+    buddy_free_pages(ptr);
+}
+void pmm_init();

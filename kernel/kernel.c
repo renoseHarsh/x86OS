@@ -1,5 +1,6 @@
-#include "buddy/buddy.h"
+#include "bump.h"
 #include "gdt.h"
+#include "heap/heap.h"
 #include "idt.h"
 #include "kprintf.h"
 #include "layout.h"
@@ -7,10 +8,10 @@
 #include "panic.h"
 #include "pic.h"
 #include "pit.h"
+#include "pmm.h"
 #include "sched.h"
 #include "serial.h"
 #include "vga.h"
-#include "vmm.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -33,7 +34,7 @@ typedef struct {
     memory_map_t entries[0];
 } multiboot_tag_mmap;
 
-memory_map_t memory_map[6];
+memory_map_t *memory_map;
 
 void perform_jump();
 
@@ -46,28 +47,39 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
         kernel_panic();
     }
 
-    header_t *header = (header_t *)mbi_ptr;
+    header_t *header = (header_t *)P2V(mbi_ptr);
 
-    uint32_t current_adr = mbi_ptr + 8;
+    uint32_t current_adr = (uintptr_t)header + 8;
 
-    while (current_adr < mbi_ptr + header->size) {
+    uint32_t placement_addr = (uint32_t)V2P(_kernel_start);
+
+    if (mbi_ptr + header->size > placement_addr)
+        placement_addr = mbi_ptr + header->size;
+
+    while (current_adr < (uintptr_t)header + header->size) {
         tag_t *tag = (tag_t *)current_adr;
         if (tag->type == 0 && tag->size == 8)
             break;
-
-        if (tag->type == 6) {
-            for (int i = 0; i < 6; i++) {
-                memory_map[i] = ((multiboot_tag_mmap *)tag)->entries[i];
-            }
+        if (tag->type == 6)
+            memory_map = ((multiboot_tag_mmap *)tag)->entries;
         }
 
         current_adr = current_adr + ((tag->size + 7) & ~7);
     }
 
-    vmm_init();
-    kprintf("Paging initialized.\n");
+    init_bump(placement_addr);
+
     init_idt();
     kprintf("IDT initialized.\n");
+
+    paging_init();
+    kprintf("Paging initialized.\n");
+
+    pmm_init();
+    kprintf("PMM initialized\n");
+
+    init_kmalloc();
+
     init_pic();
     kprintf("PIC initialized.\n");
     __asm__ volatile("sti");

@@ -1,4 +1,3 @@
-#include "buddy/buddy.h"
 #include "heap.h"
 #include "heap_test.h"
 #include "kprintf.h"
@@ -6,6 +5,7 @@
 #include "node.h"
 #include "paging.h"
 #include "panic.h"
+#include "pmm.h"
 #include "string.h"
 #include "utils.h"
 #include <stdbool.h>
@@ -48,7 +48,7 @@ extern size_t used_pages_count;
 
 Chunk *create_chunk()
 {
-    Chunk *f_block = (Chunk *)P2V(alloc_pages(0));
+    Chunk *f_block = (Chunk *)P2V(pmm_alloc(0));
     kmemset(f_block, 0, PAGE_SIZE);
     Chunk *m_block = f_block + 1;
     Chunk *l_block = (Chunk *)((uintptr_t)f_block + PAGE_SIZE) - 1;
@@ -99,7 +99,7 @@ void *kmalloc(size_t size)
 
     if (size >= 0x1000) {
         size_t order = log_two(size - 1) + 1 - BASE_SHIFT;
-        void *ptr = (void *)P2V(alloc_pages(order));
+        void *ptr = (void *)P2V(pmm_alloc(order));
         if (ptr)
             mem_used += (1 << (BASE_SHIFT + order));
         return ptr;
@@ -172,7 +172,7 @@ void return_page(Node *f_block)
     remove_node((Node **)first, l_block);
     mem_meta -= (HEADER_SIZE + MIN_SIZE);
 
-    free_pages((void *)V2P(f_block));
+    pmm_free((void *)V2P(f_block));
 }
 
 void kfree(void *ptr)
@@ -181,7 +181,7 @@ void kfree(void *ptr)
         uintptr_t addr = V2P(ptr);
         size_t order = get_order_addr(addr);
         mem_used -= (1 << (order + BASE_SHIFT));
-        free_pages((void *)V2P(ptr));
+        pmm_free((void *)V2P(ptr));
         return;
     }
 

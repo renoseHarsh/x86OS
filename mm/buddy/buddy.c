@@ -1,9 +1,9 @@
 #include "buddy/buddy.h"
 #include "buddy/test_buddy.h"
+#include "bump.h"
 #include "kprintf.h"
 #include "layout.h"
 #include "panic.h"
-#include "pmm.h"
 #include "utils.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -13,8 +13,9 @@
 #define page_map_index(ptr) ((ptr) - page_map)
 #define buddy_index(idx) ((idx) ^ (1 << page_map[(idx)].order))
 #define page_map_real(top) (0x1000 * page_map_index(top))
+#define get_order_from_pages(num_pages) (31 - __builtin_clz((num_pages) - 1))
 
-extern memory_map_t memory_map[];
+extern memory_map_t *memory_map;
 
 Page *free_area[MAX_BUDDY_ORDER + 1] = { NULL };
 Page *page_map;
@@ -27,10 +28,10 @@ static void make_pages()
     page_n = (total_size + (0x1000 - 1)) >> 12;
     uint32_t map_size = page_n * sizeof(Page);
     uint32_t pages_needed = (map_size + (0x1000 - 1)) >> 12;
-    page_map = (Page *)P2V(pmm_alloc_page());
+    page_map = (Page *)P2V(bump_alloc(1));
     pages_needed--;
     while (pages_needed--)
-        pmm_alloc_page();
+        bump_alloc(1);
 
     for (size_t i = 0; i < page_n; i++) {
         page_map[i].flags = P_KERNEL;
@@ -77,9 +78,9 @@ size_t get_order_addr(uintptr_t addr)
     return page_map[idx].order;
 }
 
-void *alloc_pages(const int order)
+void *buddy_alloc_pages(const size_t order)
 {
-    int cur_order = order;
+    size_t cur_order = order;
     for (; !free_area[cur_order] && cur_order <= MAX_BUDDY_ORDER;
          cur_order++) {
     }
@@ -106,7 +107,7 @@ void *alloc_pages(const int order)
     return (void *)page_map_real(top);
 }
 
-void free_pages(void *addr)
+void buddy_free_pages(void *addr)
 {
     uintptr_t real_addr = (uintptr_t)addr;
     int index = real_page_index(real_addr);

@@ -17,7 +17,10 @@
 typedef uint32_t pde_t;
 typedef uint32_t pte_t;
 
-extern pde_t page_directory[1024];
+// extern pde_t page_directory[1024];
 
-void refresh_cr3();
-void map_range(uint32_t paddr, uint32_t vaddr, size_t size, uint32_t flag);
+void refresh_cr3(pde_t pd[]);
+void map_range(
+    pde_t pd[], uint32_t paddr, uint32_t vaddr, size_t size, uint32_t flag
+);
+void paging_init();

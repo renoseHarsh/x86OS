@@ -21,6 +21,6 @@ typedef struct Page {
 #define BASE_SIZE (1 << 12)
 
 void init_buddy();
-void *alloc_pages(const int order);
-void free_pages(void *addr);
+void *buddy_alloc_pages(const size_t order);
+void buddy_free_pages(void *addr);
 size_t get_order_addr(uintptr_t addr);

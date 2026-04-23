@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define SEED 7465
+#define SEED 9834
 #define MAX_BLOCKS 500
 #define ITERATIONS 1000
 
@@ -283,7 +283,7 @@ void do_alloc()
 {
     size_t order = krand() % (MAX_BUDDY_ORDER + 1);
     char pattern = krand() % 256;
-    char *ptr = (char *)P2V(alloc_pages(order));
+    char *ptr = (char *)P2V(buddy_alloc_pages(order));
     if (!ptr) {
         kprintf("failed\n");
         return;
@@ -313,7 +313,7 @@ bool do_free()
         kprintf("Memory corruption\n");
         return false;
     }
-    free_pages((void *)V2P(blocks[idx].ptr));
+    buddy_free_pages((void *)V2P(blocks[idx].ptr));
     blocks[idx].ptr = 0x0;
     return true;
 }
@@ -344,7 +344,7 @@ void do_path_op(int i, int op, int idx, int order)
 {
     if (op == 1) {
         char pattern = krand() % 256;
-        char *ptr = (char *)P2V(alloc_pages(order));
+        char *ptr = (char *)P2V(buddy_alloc_pages(order));
         if (!ptr) {
             kprintf("failed\n");
             return;
@@ -362,7 +362,7 @@ void do_path_op(int i, int op, int idx, int order)
             kprintf("Memory corruption\n");
             return;
         }
-        free_pages((void *)V2P(blocks[idx].ptr));
+        buddy_free_pages((void *)V2P(blocks[idx].ptr));
         blocks[idx].ptr = 0x0;
     }
     if (!check()) {
@@ -383,7 +383,7 @@ void free_all_allocation()
                 kprintf("Memory corruption in block %d\n", i);
                 continue;
             }
-            free_pages((void *)V2P(blocks[i].ptr));
+            buddy_free_pages((void *)V2P(blocks[i].ptr));
             blocks[i].ptr = 0x0;
         }
     }
