@@ -9,6 +9,7 @@
 #include "pic.h"
 #include "pit.h"
 #include "pmm.h"
+#include "process.h"
 #include "sched.h"
 #include "serial.h"
 #include "vga.h"
@@ -34,9 +35,16 @@ typedef struct {
     memory_map_t entries[0];
 } multiboot_tag_mmap;
 
-memory_map_t *memory_map;
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint32_t start;
+    uint32_t end;
+    char cmdline[0];
+} multiboot_tag_module;
 
-void perform_jump();
+memory_map_t *memory_map;
+multiboot_tag_module *user_module;
 
 void kmain(uint32_t magic, uint32_t mbi_ptr)
 {
@@ -62,6 +70,10 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
             break;
         if (tag->type == 6)
             memory_map = ((multiboot_tag_mmap *)tag)->entries;
+        else if (tag->type == 3) {
+            user_module = (multiboot_tag_module *)tag;
+            if (user_module->end > placement_addr)
+                placement_addr = user_module->end;
         }
 
         current_adr = current_adr + ((tag->size + 7) & ~7);
@@ -86,20 +98,5 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_pit(100);
     init_sched();
     init_tss();
-    perform_jump();
-}
-
-extern void jump_usermode(uintptr_t eip, uintptr_t esp);
-void perform_jump()
-{
-    uintptr_t page = (uintptr_t)alloc_pages(0);
-    map_range(page, 0x40000000, 1, PAGE_PRESENT | PAGE_RW | PAGE_USER);
-    refresh_cr3();
-    char *code = (char *)0x40000000;
-    code[0] = 0xCD; // int
-    code[1] = 0x80; // 0x80
-    code[2] = 0xEB; // jmp
-    code[3] = 0xFE; // $
-    uintptr_t user_stack = 0x40000000 + 0x1000;
-    jump_usermode((uintptr_t)code, user_stack);
+    create_process((void *)P2V(user_module->start));
 }
