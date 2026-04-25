@@ -9,13 +9,13 @@
 
 unsigned char verify[4] = { 0x7f, 'E', 'L', 'F' };
 
-void load_segment(
+uintptr_t load_segment(
     size_t idx, Elf32_Phdr *phdrs, pde_t *pd, Elf32_Ehdr *elf_hdr
 )
 {
     Elf32_Phdr *cur = phdrs + idx;
     if (cur->p_type != PT_LOAD)
-        return;
+        return 0x0;
 
     uintptr_t vaddr = cur->p_vaddr;
     uintptr_t paddr = V2P((uintptr_t)elf_hdr + cur->p_offset);
@@ -37,22 +37,28 @@ void load_segment(
         uintptr_t zero = (uintptr_t)pmm_alloc(0);
         map_range(pd, zero, zero_vaddr + (i << 12), 1, flags);
     }
+
+    return phdrs[idx].p_vaddr + (memsz_pages << 12);
 }
 
-bool load_elf(pde_t *pd, Elf32_Ehdr *elf_hdr)
+uintptr_t load_elf(pde_t *pd, Elf32_Ehdr *elf_hdr)
 {
     for (int i = 0; i < 4; i++) {
         if (elf_hdr->e_ident[i] != verify[i]) {
-            return false;
+            return 0x0;
         }
     }
 
     size_t header_n = elf_hdr->e_phnum;
     Elf32_Phdr *phdrs = (Elf32_Phdr *)((uintptr_t)elf_hdr + elf_hdr->e_phoff);
 
+    uintptr_t last_addr = 0;
+
     for (size_t i = 0; i < header_n; i++) {
-        load_segment(i, phdrs, pd, elf_hdr);
+        uintptr_t ends_at = load_segment(i, phdrs, pd, elf_hdr);
+        if (ends_at > last_addr)
+            last_addr = ends_at;
     }
 
-    return true;
+    return last_addr;
 }

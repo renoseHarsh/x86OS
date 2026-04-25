@@ -57,4 +57,4 @@ typedef struct {
     Elf32_Word sh_entsize;
 } Elf32_Shdr;
 
-bool load_elf(pde_t pd[], Elf32_Ehdr *elf_hdr);
+uintptr_t load_elf(pde_t pd[], Elf32_Ehdr *elf_hdr);
