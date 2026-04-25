@@ -1,5 +1,6 @@
 #pragma once
 #include "node.h"
+#include "paging.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,10 +10,11 @@ typedef struct {
     Node que;
     size_t id;
     ThreadStatus status;
-    uintptr_t stack;
-    uintptr_t esp;
     uint64_t wake_at;
+    uintptr_t kernel_stack_base;
+    uintptr_t kernel_esp;
+    pde_t *pd;
 } Thread;
 
-Thread *create_thread(void (*entry_point)(void *), void *arg);
-void destroy_thread(Thread *thread);
+Thread *kcreate_thread(void (*entry_point)(void *), void *arg);
+void kdestroy_thread(Thread *thread);

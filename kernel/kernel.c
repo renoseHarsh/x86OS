@@ -99,4 +99,7 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_sched();
     init_tss();
     create_process((void *)P2V(user_module->start));
+    while (1) {
+        kprintf("Hi from kernel\n");
+    }
 }

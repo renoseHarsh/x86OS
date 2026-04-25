@@ -3,9 +3,11 @@
 #include "thread.h"
 #include <stdint.h>
 
+extern pde_t kernel_page_directory[];
+
 size_t thread_id = 1;
 
-void thread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
+void kthread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
 {
     entry_point(arg);
     thread->status = TERMINATED;
@@ -13,7 +15,7 @@ void thread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
     kernel_panic();
 }
 
-Thread *create_thread(void (*entry_point)(void *), void *arg)
+Thread *kcreate_thread(void (*entry_point)(void *), void *arg)
 {
     Thread *thread = kmalloc(sizeof(Thread));
     uint32_t *stackFrame = kmalloc(0x1000);
@@ -26,9 +28,9 @@ Thread *create_thread(void (*entry_point)(void *), void *arg)
 
     uint32_t threadesp = (uint32_t)sp;
 
-    *--sp = (1 << 9);               // eflags interrupt enabled
-    *--sp = 0x08;                   // CS
-    *--sp = (uint32_t)&thread_stub; // eip
+    *--sp = (1 << 9);                // eflags interrupt enabled
+    *--sp = 0x08;                    // CS
+    *--sp = (uint32_t)&kthread_stub; // eip
 
     *--sp = 0; // error_code
     *--sp = 0; // interrupt
@@ -43,18 +45,19 @@ Thread *create_thread(void (*entry_point)(void *), void *arg)
     *--sp = 0;                           // esi
     *--sp = 0;                           // edi
 
-    thread->status = RUNNABLE;
-    thread->id = thread_id++;
     thread->que.next = NULL;
     thread->que.prev = NULL;
-    thread->stack = (uintptr_t)stackFrame;
-    thread->esp = (uintptr_t)sp;
+    thread->id = thread_id++;
+    thread->status = RUNNABLE;
+    thread->kernel_stack_base = (uintptr_t)stackFrame;
+    thread->kernel_esp = (uintptr_t)sp;
+    thread->pd = kernel_page_directory;
 
     return thread;
 }
 
-void destroy_thread(Thread *thread)
+void kdestroy_thread(Thread *thread)
 {
-    kfree((void *)thread->stack);
+    kfree((void *)thread->kernel_stack_base);
     kfree(thread);
 }

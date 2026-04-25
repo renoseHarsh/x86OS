@@ -45,9 +45,7 @@ void init_gdt()
 
 void init_tss()
 {
-    tss.ss0 = (uintptr_t)&gdt[2] - (uintptr_t)&gdt[0];
-    tss.esp0 = (uint32_t)&kernel_stack[0x1000];
-
+    tss.ss0 = (2 << 3) | 0 | 0;
     __asm__ volatile("ltr %0" ::"r"((uint16_t)((uintptr_t)&gdt[5]
                                                - (uintptr_t)&gdt[0])));
 }

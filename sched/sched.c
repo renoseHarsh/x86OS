@@ -1,4 +1,5 @@
 #include "dlist.h"
+#include "gdt.h"
 #include "heap/heap.h"
 #include "isr.h"
 #include "panic.h"
@@ -12,6 +13,8 @@ DList que;
 DList sleepQue;
 extern uint64_t ticks;
 extern uintptr_t current_sp;
+extern pde_t kernel_page_directory[];
+extern TSS_ENTRY tss;
 Thread *cur_thread = NULL;
 
 void sched_enqueue(Thread *thread)
@@ -41,20 +44,25 @@ void wake_up_threads()
 
 void scheduler()
 {
+    cur_thread->kernel_esp = current_sp;
     if (cur_thread->status == TERMINATED) {
-        destroy_thread(cur_thread);
+        kdestroy_thread(cur_thread);
     } else if (cur_thread->status == SLEEPING) {
-        cur_thread->esp = current_sp;
         sorted_list_push(&sleepQue, (Node *)cur_thread);
     } else {
-        cur_thread->esp = current_sp;
         cur_thread->status = RUNNABLE;
         sched_enqueue(cur_thread);
     }
     wake_up_threads();
-    cur_thread = get_next_thread();
-    cur_thread->status = RUNNING;
-    current_sp = cur_thread->esp;
+    Thread *next_thread = get_next_thread();
+    next_thread->status = RUNNING;
+
+    if (next_thread->pd != cur_thread->pd) {
+        refresh_cr3(next_thread->pd);
+    }
+    cur_thread = next_thread;
+    tss.esp0 = cur_thread->kernel_stack_base + 0x1000;
+    current_sp = cur_thread->kernel_esp;
 }
 
 void yield_interrupt_handler(register_t *_)
@@ -68,12 +76,13 @@ void init_sched()
     cur_thread->id = 0;
     cur_thread->que.next = NULL;
     cur_thread->que.prev = NULL;
+    cur_thread->pd = kernel_page_directory;
     register_interrupt_handler(0x81, &yield_interrupt_handler);
 }
 
 void spawn(void (*entry_point)(void *), void *arg)
 {
-    Thread *thread = create_thread(entry_point, arg);
+    Thread *thread = kcreate_thread(entry_point, arg);
     sched_enqueue(thread);
 }
 
