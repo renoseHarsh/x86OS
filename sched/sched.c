@@ -15,6 +15,7 @@ extern uint64_t ticks;
 extern uintptr_t current_sp;
 extern pde_t kernel_page_directory[];
 extern TSS_ENTRY tss;
+static Thread *idle_thread;
 Thread *cur_thread = NULL;
 
 void sched_enqueue(Thread *thread)
@@ -45,7 +46,8 @@ void wake_up_threads()
 void scheduler()
 {
     cur_thread->kernel_esp = current_sp;
-    if (cur_thread->status == TERMINATED) {
+    if (cur_thread == idle_thread) {
+    } else if (cur_thread->status == TERMINATED) {
         kdestroy_thread(cur_thread);
     } else if (cur_thread->status == SLEEPING) {
         sorted_list_push(&sleepQue, (Node *)cur_thread);
@@ -55,7 +57,10 @@ void scheduler()
     }
     wake_up_threads();
     Thread *next_thread = get_next_thread();
-    next_thread->status = RUNNING;
+    if (next_thread)
+        next_thread->status = RUNNING;
+    else
+        next_thread = idle_thread;
 
     if (next_thread->pd != cur_thread->pd) {
         refresh_cr3(next_thread->pd);
@@ -77,6 +82,8 @@ void init_sched()
     cur_thread->que.next = NULL;
     cur_thread->que.prev = NULL;
     cur_thread->pd = kernel_page_directory;
+    cur_thread->kernel_stack_base = 0;
+    idle_thread = cur_thread;
     register_interrupt_handler(0x81, &yield_interrupt_handler);
 }
 
