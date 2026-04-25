@@ -14,5 +14,5 @@ typedef struct {
     uint64_t wake_at;
 } Thread;
 
-void create_stack(void (*entry_point)(void *), void *arg, Thread *thread);
-void free_stack(Thread *thread);
+Thread *create_thread(void (*entry_point)(void *), void *arg);
+void destroy_thread(Thread *thread);

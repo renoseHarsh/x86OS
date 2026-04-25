@@ -13,8 +13,9 @@ void thread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
     kernel_panic();
 }
 
-void create_stack(void (*entry_point)(void *), void *arg, Thread *thread)
+Thread *create_thread(void (*entry_point)(void *), void *arg)
 {
+    Thread *thread = kmalloc(sizeof(Thread));
     uint32_t *stackFrame = kmalloc(0x1000);
     uint32_t *sp = &stackFrame[1024];
 
@@ -48,9 +49,12 @@ void create_stack(void (*entry_point)(void *), void *arg, Thread *thread)
     thread->que.prev = NULL;
     thread->stack = (uintptr_t)stackFrame;
     thread->esp = (uintptr_t)sp;
+
+    return thread;
 }
 
-void free_stack(Thread *thread)
+void destroy_thread(Thread *thread)
 {
     kfree((void *)thread->stack);
+    kfree(thread);
 }
