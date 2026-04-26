@@ -56,8 +56,8 @@ void __attribute__((cdecl)) interrupt_handler(register_t *regs)
         kprintf("Unhandled interrupt: %d\n", vec);
 
     kprintf(
-        "eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x\n", regs->ax, regs->bx,
-        regs->cx, regs->dx, regs->si, regs->di
+        "eax=%x ebx=%x ecx=%x edx=%x esi=%x edi=%x\n", regs->eax, regs->ebx,
+        regs->ecx, regs->edx, regs->esi, regs->edi
     );
     kprintf("eip=%x cs=%x eflags=%x\n", regs->eip, regs->cs, regs->eflags);
     kprintf("interrupt=%d error_code=%x\n", vec, regs->error_code);
