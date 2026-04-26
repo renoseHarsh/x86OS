@@ -18,7 +18,7 @@ void seriel_init()
                           // serial returns same byte)
 
     if (inb(PORT + 0) != 0xAE) {
-        kernel_panic();
+        kernel_panic("Seriel Not available");
     }
 
     outb(PORT + 4, 0x0F);

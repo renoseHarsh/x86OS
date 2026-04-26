@@ -85,8 +85,7 @@ void *buddy_alloc_pages(const size_t order)
          cur_order++) {
     }
     if (cur_order > MAX_BUDDY_ORDER) {
-        kprintf("Out of memory");
-        kernel_panic();
+        kernel_panic("PMM Out of memory");
     }
 
     Page *top = (Page *)pop_node((Node **)&free_area[cur_order]);

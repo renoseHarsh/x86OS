@@ -12,7 +12,7 @@ void kthread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
     entry_point(arg);
     thread->status = TERMINATED;
     asm __volatile__("int $0x81");
-    kernel_panic();
+    kernel_panic("Kernel Thread didn't exit");
 }
 
 Thread *kcreate_thread(void (*entry_point)(void *), void *arg)

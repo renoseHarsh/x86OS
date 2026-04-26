@@ -21,16 +21,15 @@ isr_wrapper:
 	add esp, 8; Drop error code and interrupt number
 	iret
 
-	;      ISR stubs for interrupts with and without error codes
-	%macro isr_err_stub 1
 
+;      ISR stubs for interrupts with and without error codes
+%macro isr_err_stub 1
 isr_stub_%+%1:
 	push %1; Push interrupt number
 	jmp  isr_wrapper
 %endmacro
 
 %macro isr_no_err_stub 1
-
 isr_stub_%+%1:
 	push 0; Push dummy error code
 	push %1; Push interrupt number

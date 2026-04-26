@@ -131,8 +131,7 @@ void *kmalloc(size_t size)
     }
 
     if (!chunk) {
-        kprintf("OUT OF MEMORY");
-        kernel_panic();
+        kernel_panic("OUT OF MEMORY");
     }
 
     chunk->used = true;

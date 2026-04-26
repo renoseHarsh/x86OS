@@ -61,7 +61,7 @@ void __attribute__((cdecl)) interrupt_handler(register_t *regs)
     );
     kprintf("eip=%x cs=%x eflags=%x\n", regs->eip, regs->cs, regs->eflags);
     kprintf("interrupt=%d error_code=%x\n", vec, regs->error_code);
-    kernel_panic();
+    kernel_panic("");
 }
 
 void register_interrupt_handler(uint8_t n, isr_t handler)

@@ -9,7 +9,7 @@ void do_exit()
 {
     cur_thread->status = TERMINATED;
     asm __volatile__("int $0x81");
-    kernel_panic();
+    kernel_panic("User process didn't exit");
 }
 
 void syscall_dispatch(register_t *regs)

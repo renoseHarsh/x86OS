@@ -51,8 +51,7 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     seriel_init();
     vga_clear();
     if (magic != 0x36d76289) {
-        kprintf("FATAL: Invalid Multiboot2 magic number: 0x%x\n", magic);
-        kernel_panic();
+        kernel_panic("Invalid Multiboot2 Magic number");
     }
 
     header_t *header = (header_t *)P2V(mbi_ptr);

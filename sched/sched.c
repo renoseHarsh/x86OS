@@ -67,6 +67,7 @@ void scheduler()
     cur_thread = next_thread;
     tss.esp0 = cur_thread->kernel_stack_base + 0x1000;
     current_sp = cur_thread->kernel_esp;
+    cur_thread->status = RUNNING;
 }
 
 void yield_interrupt_handler(register_t *_)
@@ -83,6 +84,7 @@ void init_sched()
     cur_thread->pd = kernel_page_directory;
     cur_thread->kernel_stack_base = 0;
     idle_thread = cur_thread;
+    cur_thread->status = RUNNING;
     register_interrupt_handler(0x81, &yield_interrupt_handler);
 }
 
