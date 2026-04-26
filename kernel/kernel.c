@@ -12,6 +12,7 @@
 #include "process.h"
 #include "sched.h"
 #include "serial.h"
+#include "syscall.h"
 #include "vga.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -45,7 +46,6 @@ typedef struct {
 
 memory_map_t *memory_map;
 multiboot_tag_module *user_module;
-
 void kmain(uint32_t magic, uint32_t mbi_ptr)
 {
     seriel_init();
@@ -98,8 +98,6 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_pit(100);
     init_sched();
     init_tss();
+    init_syscalls();
     create_process((void *)P2V(user_module->start));
-    while (1) {
-        kprintf("Hi from kernel\n");
-    }
 }

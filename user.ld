@@ -1,4 +1,4 @@
-ENTRY(main)
+ENTRY(_entry)
 PHDRS {
     rx PT_LOAD FLAGS(5);   /* r-x: read + execute */
     ro PT_LOAD FLAGS(4);   /* r--: read only */

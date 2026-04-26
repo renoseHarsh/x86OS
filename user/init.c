@@ -1,8 +1,4 @@
-int arr[1024 + 1];
-const int b = 0;
+const int a = 1;
 void main()
 {
-    while (1) {
-        __asm__ volatile("int $0x80");
-    }
 }

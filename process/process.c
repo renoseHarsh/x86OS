@@ -80,3 +80,17 @@ void create_process(void *elf_ptr)
 
     sched_enqueue(thread);
 }
+
+void destroy_process(Thread *thread)
+{
+    pde_t *pd = thread->pd;
+
+    for (size_t pde_idx = 0; pde_idx < 768; pde_idx++) {
+        if (pd[pde_idx] & PAGE_PRESENT) {
+            uintptr_t pt = pd[pde_idx] & ~(0xFFF);
+            pmm_free((void *)pt);
+        }
+    }
+    pmm_free((void *)V2P(pd));
+    kdestroy_thread(thread);
+}

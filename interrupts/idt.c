@@ -1,17 +1,10 @@
 #include "idt.h"
-#include "isr.h"
-#include "kprintf.h"
 #include "string.h"
 #include <stdint.h>
 
 __attribute__((aligned(0x10))) static idt_entry idt[256];
 static idt_ptr idt_descriptor;
 extern void *isr_stub_table[]; // Pointer to the array of ISR stubs in isr.asm
-
-void system_call(register_t *_)
-{
-    kprintf("System Call\n");
-}
 
 static void set_idt_entry(uint8_t vector, void *isr, uint8_t attributes)
 {
@@ -32,7 +25,6 @@ void init_idt()
     }
 
     idt[0x80].attributes = 0b11101110;
-    register_interrupt_handler(0x80, &system_call);
 
     idt_descriptor.limit = sizeof(idt_entry) * 256 - 1;
     idt_descriptor.base = (uint32_t)&idt;

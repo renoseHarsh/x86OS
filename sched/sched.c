@@ -2,8 +2,8 @@
 #include "gdt.h"
 #include "heap/heap.h"
 #include "isr.h"
-#include "panic.h"
 #include "pit.h"
+#include "process.h"
 #include "sched.h"
 #include "thread.h"
 #include <stddef.h>
@@ -26,9 +26,6 @@ void sched_enqueue(Thread *thread)
 Thread *get_next_thread()
 {
     Thread *next = (Thread *)que.head;
-    if (!next) {
-        kernel_panic();
-    }
     list_pop_front(&que);
     return next;
 }
@@ -46,9 +43,14 @@ void wake_up_threads()
 void scheduler()
 {
     cur_thread->kernel_esp = current_sp;
+    pde_t *prev_pd = cur_thread->pd;
     if (cur_thread == idle_thread) {
     } else if (cur_thread->status == TERMINATED) {
-        kdestroy_thread(cur_thread);
+        if (cur_thread->pd != kernel_page_directory) {
+            refresh_cr3(kernel_page_directory);
+            destroy_process(cur_thread);
+        } else
+            kdestroy_thread(cur_thread);
     } else if (cur_thread->status == SLEEPING) {
         sorted_list_push(&sleepQue, (Node *)cur_thread);
     } else {
@@ -56,15 +58,12 @@ void scheduler()
         sched_enqueue(cur_thread);
     }
     wake_up_threads();
-    Thread *next_thread = get_next_thread();
-    if (next_thread)
-        next_thread->status = RUNNING;
-    else
-        next_thread = idle_thread;
+    Thread *next_thread = get_next_thread() ?: idle_thread;
 
-    if (next_thread->pd != cur_thread->pd) {
+    if (next_thread->pd != prev_pd) {
         refresh_cr3(next_thread->pd);
     }
+
     cur_thread = next_thread;
     tss.esp0 = cur_thread->kernel_stack_base + 0x1000;
     current_sp = cur_thread->kernel_esp;

@@ -28,11 +28,14 @@ GRUB_CFG_DST    := $(ISO_DIR)/boot/grub/grub.cfg
 KERNEL_SOURCE   := $(shell find $(SRC_DIRS) -type f -name '*.c')
 KERNEL_ASM      := $(shell find $(SRC_DIRS) -type f -name '*.asm')
 USER_SOURCE     := $(shell find $(USER_DIRS) -type f -name '*.c')
+CRT_SOURCE     := user/crt0.asm
 
 # Map object files
 KERNEL_OBJ      := $(patsubst %.c, build/%.o, $(KERNEL_SOURCE))
 KERNEL_OBJ      += $(patsubst %.asm, build/%.o, $(KERNEL_ASM))
 USER_OBJ        := $(patsubst %.c, build/%.o, $(USER_SOURCE))
+CRT_OBJ        := $(patsubst %.asm, build/%.o, $(CRT_SOURCE))
+
 
 # --- Targets ---
 .PHONY: all clean run debug
@@ -53,12 +56,13 @@ build/%.o: %.c | build
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(USER_BIN): $(USER_OBJ) | $(ISO_DIR)/boot
+$(USER_BIN): $(USER_OBJ) $(CRT_OBJ) | $(ISO_DIR)/boot
 	$(CC) $^ $(USER_LDFLAGS) -o $@
 
 $(USER_OBJ): build/$(USER_DIRS)/%.o: $(USER_DIRS)/%.c | build
 	@mkdir -p $(dir $@)
 	$(CC) $(USER_CFLAGS) $< -o $@
+
 
 $(GRUB_CFG_DST): $(GRUB_CFG_SRC) | $(ISO_DIR)/boot/grub
 	cp $< $@
@@ -70,7 +74,7 @@ clean:
 	rm -rf build $(ISO_DIR) $(ISO_NAME) serial.log
 
 run: all
-	$(QEMU) -cdrom $(ISO_NAME) -serial file:serial.log
+	$(QEMU) -cdrom $(ISO_NAME) -display none -serial stdio
 
 debug: all
 	$(QEMU) -cdrom $(ISO_NAME) -s -S & gdb "$(KERNEL_BIN)" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true
