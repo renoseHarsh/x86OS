@@ -10,9 +10,11 @@
 #include "pit.h"
 #include "pmm.h"
 #include "process.h"
+#include "reaper.h"
 #include "sched.h"
 #include "serial.h"
 #include "syscall.h"
+#include "thread.h"
 #include "vga.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -43,6 +45,30 @@ typedef struct {
     uint32_t end;
     char cmdline[0];
 } multiboot_tag_module;
+
+void something()
+{
+}
+
+void test_boi()
+{
+    sched_sleep(2);
+
+    kprintf("Making %d\n", spawn((void *)&something, NULL)->id);
+    sched_sleep(2);
+    kprintf("\n\n\n");
+    sched_sleep(10);
+
+    kprintf("Making %d\n", spawn((void *)&something, NULL)->id);
+    sched_sleep(2);
+    kprintf("\n\n\n");
+    sched_sleep(10);
+
+    kprintf("Making %d\n", spawn((void *)&something, NULL)->id);
+    sched_sleep(2);
+    kprintf("\n\n\n");
+    sched_sleep(10);
+}
 
 memory_map_t *memory_map;
 multiboot_tag_module *user_module;
@@ -95,8 +121,14 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     kprintf("PIC initialized.\n");
     __asm__ volatile("sti");
     init_pit(100);
-    init_sched();
+    Thread *main_thread = init_sched();
     init_tss();
     init_syscalls();
-    create_process((void *)P2V(user_module->start));
+    init_reaper();
+    kprintf("Making the test %d\n\n\n", spawn((void *)&test_boi, NULL)->id);
+    kprintf(
+        "Making process %d\n\n\n",
+        create_process((void *)P2V(user_module->start))->id
+    );
+    main_thread->status = IDLE;
 }

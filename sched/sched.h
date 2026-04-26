@@ -1,8 +1,8 @@
 #pragma once
 #include "thread.h"
-#include <stddef.h>
 
-void init_sched();
+#define SLEEP_FOREVER SIZE_MAX
+Thread *init_sched();
 void sched_enqueue(Thread *thread);
-void spawn(void (*entry_point)(void *), void *arg);
+Thread *spawn(void (*entry_point)(void *), void *arg);
 void sched_sleep(size_t time);

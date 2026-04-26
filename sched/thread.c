@@ -1,17 +1,17 @@
 #include "heap/heap.h"
 #include "panic.h"
 #include "thread.h"
-#include <stdint.h>
 
 extern pde_t kernel_page_directory[];
+extern void (*on_thread_exit)(Thread *);
 
 size_t thread_id = 1;
 
 void kthread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
 {
     entry_point(arg);
-    thread->status = TERMINATED;
-    asm __volatile__("int $0x81");
+    on_thread_exit(thread);
+    __asm__ volatile("int $0x81");
     kernel_panic("Kernel Thread didn't exit");
 }
 

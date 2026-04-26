@@ -46,7 +46,7 @@ KERNEL_STACK_INFO setup_kernel_stack(uintptr_t user_esp, uintptr_t entry)
     return info;
 }
 
-void create_process(void *elf_ptr)
+Thread *create_process(void *elf_ptr)
 {
     pde_t *process_pd = (pde_t *)P2V(pmm_alloc(0));
     kmemcpy(process_pd, kernel_page_directory, sizeof(pde_t) * 1024);
@@ -55,7 +55,7 @@ void create_process(void *elf_ptr)
 
     if (!stack_base) {
         kprintf("Coundn't load\n");
-        return;
+        return NULL;
     }
 
     uint32_t *user_stack = (uintptr_t *)P2V(pmm_alloc(0));
@@ -78,7 +78,11 @@ void create_process(void *elf_ptr)
     thread->kernel_esp = info.kernel_esp;
     thread->pd = process_pd;
 
+    asm __volatile__("cli");
     sched_enqueue(thread);
+    asm __volatile__("sti");
+
+    return thread;
 }
 
 void destroy_process(Thread *thread)

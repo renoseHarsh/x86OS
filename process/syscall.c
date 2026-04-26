@@ -4,11 +4,12 @@
 #include "thread.h"
 
 extern Thread *cur_thread;
+extern void (*on_thread_exit)(Thread *);
 
 void do_exit()
 {
-    cur_thread->status = TERMINATED;
-    asm __volatile__("int $0x81");
+    on_thread_exit(cur_thread);
+    __asm__ volatile("int $0x81");
     kernel_panic("User process didn't exit");
 }
 

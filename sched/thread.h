@@ -1,10 +1,8 @@
 #pragma once
 #include "node.h"
 #include "paging.h"
-#include <stddef.h>
-#include <stdint.h>
 
-typedef enum { RUNNABLE, RUNNING, SLEEPING, TERMINATED } ThreadStatus;
+typedef enum { RUNNABLE, RUNNING, SLEEPING, ZOMBIE, IDLE } ThreadStatus;
 
 typedef struct {
     Node que;
