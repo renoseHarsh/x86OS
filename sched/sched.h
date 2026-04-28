@@ -2,4 +2,5 @@
 
 #include "thread.h"
 
-void init_sched(Thread *thread);
+void init_sched();
+Thread *spawn(void (*entry)(void *), void *arg);

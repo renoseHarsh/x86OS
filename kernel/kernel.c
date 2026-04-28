@@ -11,7 +11,6 @@
 #include "pmm.h"
 #include "sched.h"
 #include "serial.h"
-#include "thread.h"
 #include "vga.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -43,10 +42,22 @@ typedef struct {
     char cmdline[0];
 } multiboot_tag_module;
 
-void pr1(void *arg)
+void print_digit(size_t num, size_t row, size_t *col)
 {
+    if (num >= 10)
+        print_digit(num / 10, row, col);
+    char c = (num % 10) + '0';
+    vga_putc_at(c, row, *col);
+    (*col)++;
+}
+
+void print_num(void *arg)
+{
+    size_t row = (size_t)arg;
+    size_t num = 0;
     while (true) {
-        kprintf("2");
+        size_t col = 0;
+        print_digit(num++, row, &col);
     }
 }
 
@@ -103,11 +114,10 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_pit(100);
     init_tss();
 
-    Thread *a = thread_create(pr1, NULL);
+    init_sched();
+    for (int i = 0; i < 8; i++) {
 
-    init_sched(a);
-
-    while (true) {
-        kprintf("1");
+        spawn(print_num, (void *)9 + i);
     }
+    print_num((void *)7);
 }

@@ -9,7 +9,7 @@ context_switch:
 
     pusha
     mov [ecx], esp
-    mov esp, edx
+    mov esp, [edx]
     popa
 
     ret
