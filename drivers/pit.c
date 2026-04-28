@@ -8,13 +8,13 @@
 uint16_t divisor;
 uint64_t ticks;
 
-extern void scheduler();
+extern void (*yield)();
 
-void timer(register_t *_)
+static void timer(register_t *_)
 {
     ticks += divisor;
     pic_send_eoi(0);
-    scheduler();
+    yield();
 }
 
 void init_pit(uint32_t hz)

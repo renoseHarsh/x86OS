@@ -9,7 +9,9 @@
 #include "pic.h"
 #include "pit.h"
 #include "pmm.h"
+#include "sched.h"
 #include "serial.h"
+#include "thread.h"
 #include "vga.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -40,6 +42,13 @@ typedef struct {
     uint32_t end;
     char cmdline[0];
 } multiboot_tag_module;
+
+void pr1(void *arg)
+{
+    while (true) {
+        kprintf("2");
+    }
+}
 
 memory_map_t *memory_map;
 multiboot_tag_module *user_module;
@@ -93,4 +102,12 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     __asm__ volatile("sti");
     init_pit(100);
     init_tss();
+
+    Thread *a = thread_create(pr1, NULL);
+
+    init_sched(a);
+
+    while (true) {
+        kprintf("1");
+    }
 }
