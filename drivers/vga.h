@@ -1,6 +1,6 @@
 #pragma once
 
-#pragma once
+#include <stdint.h>
 
 enum vga_color {
     VGA_COLOR_BLACK = 0,
@@ -24,4 +24,5 @@ enum vga_color {
 void vga_set_color(const enum vga_color fg, const enum vga_color bg);
 void vga_clear();
 void vga_putc(const char c);
+void vga_putc_at(const char c, const uint8_t row, const uint8_t col);
 void vga_puts(const char *str);

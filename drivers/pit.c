@@ -13,8 +13,8 @@ extern void scheduler();
 void timer(register_t *_)
 {
     ticks += divisor;
-    scheduler();
     pic_send_eoi(0);
+    scheduler();
 }
 
 void init_pit(uint32_t hz)
@@ -24,5 +24,5 @@ void init_pit(uint32_t hz)
     outb(0x40, divisor & 0xFF);
     outb(0x40, divisor >> 8);
 
-    register_request_handler(0, &timer);
+    register_interrupt_handler(IRQ_BASE + 0, timer);
 }

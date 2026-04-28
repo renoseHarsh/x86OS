@@ -73,6 +73,11 @@ void vga_putc(const char c)
     vga_move_cursor();
 }
 
+void vga_putc_at(const char c, const uint8_t row, const uint8_t col)
+{
+    vga_buffer[(row * columns) + col] = c | (vga_color << 8);
+}
+
 void vga_puts(const char *str)
 {
     for (; *str != '\0'; str++)

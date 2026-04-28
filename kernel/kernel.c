@@ -69,6 +69,26 @@ void test_boi()
     sched_sleep(10);
 }
 
+void print_digit(size_t num, size_t row, size_t *col)
+{
+    if (num >= 10) {
+        print_digit(num / 10, row, col);
+    }
+    char c = (num % 10) + '0';
+    vga_putc_at(c, row, (*col)++);
+}
+
+void test_thread(void *args)
+{
+    size_t num = UINT32_MAX - 10000;
+    size_t row = (size_t)args;
+    while (num < UINT32_MAX) {
+        size_t col = 0;
+        num++;
+        print_digit(num++, row, &col);
+    }
+}
+
 memory_map_t *memory_map;
 multiboot_tag_module *user_module;
 void kmain(uint32_t magic, uint32_t mbi_ptr)
@@ -124,6 +144,9 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_tss();
     init_syscalls();
     init_reaper();
-    kprintf("Making the test %d\n\n\n", spawn((void *)&test_boi, NULL)->id);
+    // kprintf("Making the test %d\n\n\n", spawn((void *)&test_boi, NULL)->id);
+    for (int i = 0; i < 8; i++) {
+        spawn((void *)&test_thread, (void *)(15 + i));
+    }
     main_thread->status = IDLE;
 }
