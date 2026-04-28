@@ -9,7 +9,6 @@
 #include "pic.h"
 #include "pit.h"
 #include "pmm.h"
-#include "process.h"
 #include "reaper.h"
 #include "sched.h"
 #include "serial.h"
@@ -126,9 +125,5 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
     init_syscalls();
     init_reaper();
     kprintf("Making the test %d\n\n\n", spawn((void *)&test_boi, NULL)->id);
-    kprintf(
-        "Making process %d\n\n\n",
-        create_process((void *)P2V(user_module->start))->id
-    );
     main_thread->status = IDLE;
 }

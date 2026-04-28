@@ -56,7 +56,7 @@ build/%.o: %.c | build
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(USER_BIN): $(USER_OBJ) $(CRT_OBJ) | $(ISO_DIR)/boot
+$(USER_BIN): $(CRT_OBJ) $(USER_OBJ) | $(ISO_DIR)/boot
 	$(CC) $^ $(USER_LDFLAGS) -o $@
 
 $(USER_OBJ): build/$(USER_DIRS)/%.o: $(USER_DIRS)/%.c | build

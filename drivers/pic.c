@@ -45,8 +45,6 @@ void hardware_interrupt_handler(register_t *regs)
     if (request_handlers[irq]) {
         request_handlers[irq](regs);
     }
-
-    pic_send_eoi(irq);
 }
 
 void init_pic()

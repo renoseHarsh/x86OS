@@ -5,15 +5,16 @@
 #include "pit.h"
 #include "sched.h"
 #include "thread.h"
+#include <stdint.h>
 
 DList que;
 DList sleepQue;
 extern uint64_t ticks;
-extern uintptr_t current_sp;
 extern pde_t kernel_page_directory[];
 extern TSS_ENTRY tss;
 static Thread *idle_thread;
 Thread *cur_thread = NULL;
+extern void context_switch(uint32_t *prev_esp, uint32_t cur_esp);
 
 void sched_enqueue(Thread *thread)
 {
@@ -39,24 +40,22 @@ void wake_up_threads()
 
 void scheduler()
 {
-    cur_thread->kernel_esp = current_sp;
-    pde_t *prev_pd = cur_thread->pd;
-
     if (cur_thread->status == RUNNING) {
         sched_enqueue(cur_thread);
     }
     wake_up_threads();
-    Thread *next_thread = get_next_thread() ?: idle_thread;
+    Thread *prev_thread = cur_thread;
+    cur_thread = get_next_thread() ?: idle_thread;
 
-    if (next_thread->pd != prev_pd) {
-        refresh_cr3(next_thread->pd);
+    if (cur_thread->pd != prev_thread->pd) {
+        refresh_cr3(cur_thread->pd);
     }
 
-    cur_thread = next_thread;
     tss.esp0 = cur_thread->kernel_stack_base + 0x1000;
-    current_sp = cur_thread->kernel_esp;
     if (cur_thread != idle_thread)
         cur_thread->status = RUNNING;
+    if (cur_thread != prev_thread)
+        context_switch(&prev_thread->kernel_esp, cur_thread->kernel_esp);
 }
 
 void yield_interrupt_handler(register_t *_)

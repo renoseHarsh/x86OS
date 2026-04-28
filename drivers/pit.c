@@ -1,6 +1,6 @@
-#include "pit.h"
 #include "isr.h"
 #include "pic.h"
+#include "pit.h"
 #include "ports.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -14,6 +14,7 @@ void timer(register_t *_)
 {
     ticks += divisor;
     scheduler();
+    pic_send_eoi(0);
 }
 
 void init_pit(uint32_t hz)
