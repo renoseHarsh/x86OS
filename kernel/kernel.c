@@ -2,6 +2,7 @@
 #include "gdt.h"
 #include "heap/heap.h"
 #include "idt.h"
+#include "kernel.h"
 #include "kprintf.h"
 #include "layout.h"
 #include "paging.h"
@@ -64,7 +65,7 @@ void print_num(void *arg)
         size_t col = 0;
         print_digit(num++, row, &col);
         if (num % key == 0)
-            yield();
+            thread_sleep(0);
     }
 }
 

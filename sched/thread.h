@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum { RUNNING, RUNNABLE, IDLE, ZOMBIE } THREAD_STATUS;
+typedef enum { RUNNING, RUNNABLE, IDLE, ZOMBIE, SLEEPING } THREAD_STATUS;
 
 typedef struct {
     Node node;
@@ -12,6 +12,7 @@ typedef struct {
     void *stack;
     THREAD_STATUS status;
     size_t id;
+    size_t wake_at;
 } Thread;
 
 Thread *thread_create(void (*entry)(void *), void *arg);

@@ -1,5 +1,6 @@
 #include "panic.h"
 #include "queue.h"
+#include "thread.h"
 
 void list_push_back(DLList *list, Node *node)
 {
@@ -44,25 +45,19 @@ void list_push_front(DLList *list, Node *node)
 
 void list_sorted_push(DLList *list, Node *node)
 {
-    // empty push front
-    // find slot the first element that is bigger than me name it x
-    // if x is head then push front
-    // if x was never found then push back
-    // else insert node before x
+    Node *cur = list->head;
+    while (cur && ((Thread *)cur)->wake_at <= ((Thread *)node)->wake_at)
+        cur = cur->next;
 
-    // Node *cur = list->head;
-    // while (cur && ((Thread *)cur)->wake_at <= ((Thread *)node)->wake_at)
-    //     cur = cur->next;
-    //
-    // if (cur == NULL)
-    //     list_push_back(list, node);
-    // else if (cur == list->head)
-    //     list_push_front(list, node);
-    // else {
-    //     node->prev = cur->prev;
-    //     node->next = cur;
-    //     cur->prev->next = node;
-    //     cur->prev = node;
-    //     list->size++;
-    // }
+    if (cur == NULL)
+        list_push_back(list, node);
+    else if (cur == list->head)
+        list_push_front(list, node);
+    else {
+        node->prev = cur->prev;
+        node->next = cur;
+        cur->prev->next = node;
+        cur->prev = node;
+        list->size++;
+    }
 }

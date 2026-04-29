@@ -1,4 +1,5 @@
 #include "heap/heap.h"
+#include "kernel.h"
 #include "layout.h"
 #include "pmm.h"
 #include "thread.h"
