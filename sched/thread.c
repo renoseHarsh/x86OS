@@ -6,11 +6,14 @@
 #include <stdint.h>
 
 size_t thread_id = 1;
+extern void (*yield)();
 
 static void kthread_stub(void (*entry)(void *), void *arg, Thread *thread)
 {
     __asm__ volatile("sti");
     entry(arg);
+    thread->status = ZOMBIE;
+    yield();
 }
 
 Thread *thread_create(void (*entry)(void *), void *arg)
@@ -38,6 +41,7 @@ Thread *thread_create(void (*entry)(void *), void *arg)
 
     thread->esp = (uint32_t)esp;
     thread->stack = stack;
+    thread->id = thread_id++;
 
     return thread;
 }
