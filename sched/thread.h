@@ -12,7 +12,8 @@ typedef struct {
     void *stack;
     THREAD_STATUS status;
     size_t id;
-    size_t wake_at;
+    uint64_t wake_at;
 } Thread;
 
 Thread *thread_create(void (*entry)(void *), void *arg);
+void destroy_thread(Thread *thread);

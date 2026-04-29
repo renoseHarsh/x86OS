@@ -1,5 +1,4 @@
 #include "heap/heap.h"
-#include "kernel.h"
 #include "layout.h"
 #include "pmm.h"
 #include "thread.h"
@@ -8,21 +7,22 @@
 
 size_t thread_id = 1;
 extern void (*yield)();
+extern void (*on_thread_exit)(Thread *);
 
 static void kthread_stub(void (*entry)(void *), void *arg, Thread *thread)
 {
     __asm__ volatile("sti");
     entry(arg);
-    thread->status = ZOMBIE;
+    on_thread_exit(thread);
     yield();
 }
 
 Thread *thread_create(void (*entry)(void *), void *arg)
 {
-    void *stack = (void *)P2V(pmm_alloc(0));
+    void *stack = pmm_alloc(0);
     Thread *thread = kmalloc(sizeof(Thread));
 
-    uint32_t *esp = stack + 0x1000;
+    uint32_t *esp = (uint32_t *)(P2V(stack) + 0x1000);
 
     *--esp = (uint32_t)thread;
     *--esp = (uint32_t)arg;
@@ -45,4 +45,10 @@ Thread *thread_create(void (*entry)(void *), void *arg)
     thread->id = thread_id++;
 
     return thread;
+}
+
+void destroy_thread(Thread *thread)
+{
+    pmm_free(thread->stack);
+    kfree(thread);
 }

@@ -2,7 +2,6 @@
 #include "gdt.h"
 #include "heap/heap.h"
 #include "idt.h"
-#include "kernel.h"
 #include "kprintf.h"
 #include "layout.h"
 #include "paging.h"
@@ -10,7 +9,7 @@
 #include "pic.h"
 #include "pit.h"
 #include "pmm.h"
-#include "random.h"
+#include "reaper.h"
 #include "sched.h"
 #include "serial.h"
 #include "thread.h"
@@ -45,6 +44,25 @@ typedef struct {
     char cmdline[0];
 } multiboot_tag_module;
 
+void somebody()
+{
+}
+
+void real_test()
+{
+    kprintf("creating %u\n", spawn((void *)somebody, NULL)->id);
+    thread_sleep(5);
+    kprintf("\n\n");
+
+    kprintf("creating %u\n", spawn((void *)somebody, NULL)->id);
+    thread_sleep(5);
+    kprintf("\n\n");
+
+    kprintf("creating %u\n", spawn((void *)somebody, NULL)->id);
+    thread_sleep(5);
+    kprintf("\n\n");
+}
+
 void print_digit(size_t num, size_t row, size_t *col)
 {
     if (num >= 10)
@@ -53,19 +71,15 @@ void print_digit(size_t num, size_t row, size_t *col)
     vga_putc_at(c, row, *col);
     (*col)++;
 }
-extern void (*yield)();
 
 void print_num(void *arg)
 {
     size_t row = (size_t)arg;
-    size_t key = (krand() % 1000) + 100;
-    // for (uint32_t num = UINT32_MAX - 10000; num < UINT32_MAX; num++) {
-    size_t num = 0;
-    while (true) {
+    for (uint32_t num = UINT32_MAX - 10000; num < UINT32_MAX; num++) {
+        // size_t num = 0;
+        // while (true) {
         size_t col = 0;
-        print_digit(num++, row, &col);
-        if (num % key == 0)
-            thread_sleep(0);
+        print_digit(num, row, &col);
     }
 }
 
@@ -118,15 +132,15 @@ void kmain(uint32_t magic, uint32_t mbi_ptr)
 
     init_pic();
     kprintf("PIC initialized.\n");
-    __asm__ volatile("sti");
-    init_pit(10000);
+    init_pit(100);
     init_tss();
 
     Thread *main_thread = init_sched();
-    for (int i = 0; i < 8; i++) {
-
-        spawn(print_num, (void *)9 + i);
-    }
+    init_reaper();
+    // for (int i = 0; i < 8; i++) {
+    //     spawn(print_num, (void *)17 + i);
+    // }
+    spawn((void *)real_test, NULL);
     main_thread->status = IDLE;
-    print_num((void *)7);
+    __asm__ volatile("sti");
 }

@@ -1,5 +1,4 @@
 #include "isr.h"
-#include "kernel.h"
 #include "pic.h"
 #include "pit.h"
 #include "ports.h"

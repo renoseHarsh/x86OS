@@ -77,4 +77,4 @@ run: all
 	$(QEMU) -cdrom $(ISO_NAME) -display none -serial stdio
 
 debug: all
-	$(QEMU) -cdrom $(ISO_NAME) -s -S & gdb "$(KERNEL_BIN)" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true
+	$(QEMU) -cdrom $(ISO_NAME) -serial file:serial.log -s -S & gdb "$(KERNEL_BIN)" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true
