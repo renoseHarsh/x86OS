@@ -3,10 +3,11 @@
 #include <stdint.h>
 
 typedef struct {
+    uint32_t ds;
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
     uint32_t interrupt, error_code;
     uint32_t eip, cs, eflags;
-
+    uint32_t useresp, ss;
 } __attribute__((packed)) register_t;
 
 void interrupt_handler(register_t *regs);

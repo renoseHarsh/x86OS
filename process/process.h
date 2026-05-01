@@ -1,7 +1,6 @@
 #pragma once
 
+#include "elf.h"
 #include "thread.h"
-#include <stdint.h>
 
-Thread *create_process(void *elf_ptr);
-void destroy_process(Thread *thread);
+Thread *create_process(Elf32_Ehdr *elf_hdr);

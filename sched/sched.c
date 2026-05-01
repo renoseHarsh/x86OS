@@ -1,103 +1,105 @@
-#include "dlist.h"
+#include "atomic.h"
 #include "gdt.h"
 #include "heap/heap.h"
-#include "isr.h"
 #include "pit.h"
+#include "queue.h"
 #include "sched.h"
 #include "thread.h"
+#include <stddef.h>
+#include <stdint.h>
 
-DList que;
-DList sleepQue;
-extern uint64_t ticks;
-extern uintptr_t current_sp;
-extern pde_t kernel_page_directory[];
+extern void context_switch(uint32_t *old_esp, uint32_t *new_esp);
 extern TSS_ENTRY tss;
-static Thread *idle_thread;
-Thread *cur_thread = NULL;
+extern pde_t kernel_page_directory[];
 
-void sched_enqueue(Thread *thread)
+static uint64_t ticks;
+static uint16_t tick_rate;
+
+DLList que, sleep_que;
+Thread *cur_thread, *idle_thread;
+
+static void _thread_ready(Thread *thread)
 {
     thread->status = RUNNABLE;
     list_push_back(&que, (Node *)thread);
 }
 
-Thread *get_next_thread()
+static void wake_up_threads()
 {
-    Thread *next = (Thread *)que.head;
-    list_pop_front(&que);
-    return next;
+    while (sleep_que.head && ((Thread *)sleep_que.head)->wake_at <= ticks) {
+        Thread *thread = (Thread *)list_pop_front(&sleep_que);
+        _thread_ready(thread);
+    }
 }
 
-void wake_up_threads()
+static Thread *get_next_thread()
 {
-    while (sleepQue.head && ((Thread *)sleepQue.head)->wake_at <= ticks) {
-        Node *cur = sleepQue.head;
-        list_pop_front(&sleepQue);
-        sched_enqueue((Thread *)cur);
+    if (que.head) {
+        Thread *thread = (Thread *)list_pop_front(&que);
+        return thread;
     }
+    return NULL;
 }
 
 void scheduler()
 {
-    cur_thread->kernel_esp = current_sp;
-    pde_t *prev_pd = cur_thread->pd;
-
+    ATOMIC_START();
     if (cur_thread->status == RUNNING) {
-        sched_enqueue(cur_thread);
+        _thread_ready(cur_thread);
     }
-    wake_up_threads();
-    Thread *next_thread = get_next_thread() ?: idle_thread;
-
-    if (next_thread->pd != prev_pd) {
-        refresh_cr3(next_thread->pd);
-    }
-
-    cur_thread = next_thread;
-    tss.esp0 = cur_thread->kernel_stack_base + 0x1000;
-    current_sp = cur_thread->kernel_esp;
+    Thread *prev_thread = cur_thread;
+    cur_thread = get_next_thread();
+    if (!cur_thread)
+        cur_thread = idle_thread;
     if (cur_thread != idle_thread)
         cur_thread->status = RUNNING;
+    if (cur_thread->pd != prev_thread->pd)
+        refresh_cr3(cur_thread->pd);
+    tss.esp0 = (uint32_t)cur_thread->stack + 0x1000;
+    context_switch(&prev_thread->esp, &cur_thread->esp);
+    ATOMIC_END();
 }
 
-void yield_interrupt_handler(register_t *_)
+static void timer()
 {
+    ticks += tick_rate;
+    wake_up_threads();
     scheduler();
 }
 
 Thread *init_sched()
 {
+    tick_rate = init_pit(100, timer);
+    que.size = 0;
+    que.head = NULL;
+    que.tail = NULL;
+
+    sleep_que.size = 0;
+    sleep_que.head = NULL;
+    sleep_que.tail = NULL;
+
     cur_thread = kmalloc(sizeof(Thread));
-    cur_thread->id = 0;
-    cur_thread->que.next = NULL;
-    cur_thread->que.prev = NULL;
-    cur_thread->pd = kernel_page_directory;
-    cur_thread->kernel_stack_base = 0;
     idle_thread = cur_thread;
-    cur_thread->status = RUNNING;
-    register_interrupt_handler(0x81, &yield_interrupt_handler);
+    cur_thread->id = 0;
+    cur_thread->pd = kernel_page_directory;
     return cur_thread;
 }
 
-Thread *spawn(void (*entry_point)(void *), void *arg)
+void thread_sleep(size_t time)
 {
-    Thread *thread = kcreate_thread(entry_point, arg);
-    __asm__ volatile("cli");
-    sched_enqueue(thread);
-    __asm__ volatile("sti");
-
-    return thread;
+    uint64_t wake_at = ticks + ((uint64_t)time * (uint64_t)PIT_CRYSTAL);
+    cur_thread->wake_at = wake_at;
+    ATOMIC_START();
+    cur_thread->status = SLEEPING;
+    list_sorted_push(&sleep_que, (Node *)cur_thread);
+    ATOMIC_END();
+    scheduler();
 }
 
-void sched_sleep(size_t time)
+void thread_ready(Thread *thread)
 {
-    cur_thread->status = SLEEPING;
-    if (time < SLEEP_FOREVER) {
-        uint64_t wake_at = ticks + ((uint64_t)time * PIT_CRYSTAL);
-        cur_thread->wake_at = wake_at;
-
-        asm __volatile__("cli");
-        sorted_list_push(&sleepQue, (Node *)cur_thread);
-        asm __volatile__("sti");
-    }
-    asm __volatile__("int $0x81");
+    ATOMIC_START();
+    thread->status = RUNNABLE;
+    list_push_back(&que, (Node *)thread);
+    ATOMIC_END();
 }

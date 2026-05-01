@@ -1,6 +1,5 @@
 #include "heap.h"
 #include "heap_test.h"
-#include "kprintf.h"
 #include "layout.h"
 #include "node.h"
 #include "paging.h"

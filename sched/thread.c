@@ -1,63 +1,59 @@
 #include "heap/heap.h"
-#include "panic.h"
+#include "layout.h"
+#include "paging.h"
+#include "pmm.h"
+#include "reaper.h"
+#include "sched.h"
 #include "thread.h"
-
-extern pde_t kernel_page_directory[];
-extern void (*on_thread_exit)(Thread *);
+#include <stddef.h>
+#include <stdint.h>
 
 size_t thread_id = 1;
+extern pde_t kernel_page_directory[];
 
-void kthread_stub(void (*entry_point)(void *), void *arg, Thread *thread)
+static void kthread_stub(void (*entry)(void *), void *arg, Thread *thread)
 {
-    entry_point(arg);
-    on_thread_exit(thread);
-    __asm__ volatile("int $0x81");
-    kernel_panic("Kernel Thread didn't exit");
+    __asm__ volatile("sti");
+    entry(arg);
+    reaper_add(thread);
+    scheduler();
 }
 
-Thread *kcreate_thread(void (*entry_point)(void *), void *arg)
+Thread *thread_create(void (*entry)(void *), void *arg)
 {
+    void *stack = pmm_alloc(0);
     Thread *thread = kmalloc(sizeof(Thread));
-    uint32_t *stackFrame = kmalloc(0x1000);
-    uint32_t *sp = &stackFrame[1024];
 
-    *--sp = (uint32_t)thread;
-    *--sp = (uintptr_t)arg;
-    *--sp = (uint32_t)entry_point;
-    *--sp = 0x0; // fake return address for trampoline
+    uint32_t *esp = (uint32_t *)(P2V(stack) + 0x1000);
 
-    uint32_t threadesp = (uint32_t)sp;
+    *--esp = (uint32_t)thread;
+    *--esp = (uint32_t)arg;
+    *--esp = (uint32_t)entry;
 
-    *--sp = (1 << 9);                // eflags interrupt enabled
-    *--sp = 0x08;                    // CS
-    *--sp = (uint32_t)&kthread_stub; // eip
+    *--esp = 0x0;
+    *--esp = (uint32_t)kthread_stub;
 
-    *--sp = 0; // error_code
-    *--sp = 0; // interrupt
+    *--esp = 0; // eax
+    *--esp = 0; // ecx
+    *--esp = 0; // edx
+    *--esp = 0; // ebx
+    *--esp = 0; // esp (ignored by popa)
+    *--esp = 0; // ebp
+    *--esp = 0; // esi
+    *--esp = 0; // edi
 
-    for (int i = 0; i < 4; i++) {
-        *--sp = 0;
-    } // eax, ecx, edx, ebx
-
-    *--sp = threadesp; // esp
-
-    *--sp = (uint32_t)&stackFrame[1024]; // ebp
-    *--sp = 0;                           // esi
-    *--sp = 0;                           // edi
-
-    thread->que.next = NULL;
-    thread->que.prev = NULL;
+    thread->esp = (uint32_t)esp;
+    thread->stack = stack;
     thread->id = thread_id++;
-    thread->status = RUNNABLE;
-    thread->kernel_stack_base = (uintptr_t)stackFrame;
-    thread->kernel_esp = (uintptr_t)sp;
     thread->pd = kernel_page_directory;
+
+    thread_ready(thread);
 
     return thread;
 }
 
-void kdestroy_thread(Thread *thread)
+void destroy_thread(Thread *thread)
 {
-    kfree((void *)thread->kernel_stack_base);
+    pmm_free(thread->stack);
     kfree(thread);
 }

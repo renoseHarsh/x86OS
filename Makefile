@@ -19,8 +19,8 @@ USER_LDFLAGS := -T user.ld -ffreestanding -nostdlib -lgcc -m32
 # --- Files ---
 ISO_NAME    	:= os.iso
 ISO_DIR 		:= isodir
-KERNEL_BIN      := $(ISO_DIR)/boot/kernel.elf
-USER_BIN        := $(ISO_DIR)/boot/user.elf
+KERNEL_ELF      := $(ISO_DIR)/boot/kernel.elf
+USER_ELF        := $(ISO_DIR)/boot/user.elf
 GRUB_CFG_SRC    := grub.cfg
 GRUB_CFG_DST    := $(ISO_DIR)/boot/grub/grub.cfg
 
@@ -42,10 +42,10 @@ CRT_OBJ        := $(patsubst %.asm, build/%.o, $(CRT_SOURCE))
 
 all: $(ISO_NAME)
 
-$(ISO_NAME): $(KERNEL_BIN) $(USER_BIN) $(GRUB_CFG_DST)
+$(ISO_NAME): $(KERNEL_ELF) $(USER_ELF) $(GRUB_CFG_DST)
 	i686-elf-grub-mkrescue -o $@ $(ISO_DIR)
 
-$(KERNEL_BIN): $(KERNEL_OBJ) | $(ISO_DIR)/boot
+$(KERNEL_ELF): $(KERNEL_OBJ) | $(ISO_DIR)/boot
 	$(CC) $^ $(LDFLAGS) -o $@
 
 build/%.o: %.asm | build
@@ -56,7 +56,7 @@ build/%.o: %.c | build
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $< -o $@
 
-$(USER_BIN): $(USER_OBJ) $(CRT_OBJ) | $(ISO_DIR)/boot
+$(USER_ELF): $(CRT_OBJ) $(USER_OBJ) | $(ISO_DIR)/boot
 	$(CC) $^ $(USER_LDFLAGS) -o $@
 
 $(USER_OBJ): build/$(USER_DIRS)/%.o: $(USER_DIRS)/%.c | build
@@ -77,4 +77,4 @@ run: all
 	$(QEMU) -cdrom $(ISO_NAME) -display none -serial stdio
 
 debug: all
-	$(QEMU) -cdrom $(ISO_NAME) -s -S & gdb "$(KERNEL_BIN)" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true
+	$(QEMU) -cdrom $(ISO_NAME) -serial file:serial.log -s -S & gdb "$(KERNEL_ELF)" -ex "target remote localhost:1234"; kill $$! 2>/dev/null || true

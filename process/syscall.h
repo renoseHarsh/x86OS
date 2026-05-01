@@ -1,4 +1,5 @@
 #pragma once
 
-typedef enum { SYS_EXIT = 1 } SyscallCode;
-void init_syscalls();
+typedef enum { SYS_EXIT } SYSTEM_CALLS;
+
+void init_syscall();
