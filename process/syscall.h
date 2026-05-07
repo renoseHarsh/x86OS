@@ -1,5 +1,5 @@
 #pragma once
 
-typedef enum { SYS_EXIT } SYSTEM_CALLS;
+typedef enum { SYS_EXIT, SYS_SLEEP } SYSTEM_CALLS;
 
 void init_syscall();

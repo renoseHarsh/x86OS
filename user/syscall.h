@@ -1,3 +1,5 @@
 #pragma once
+#include <stdint.h>
 
-void exit();
+extern void exit();
+extern void sleep(uint32_t);
